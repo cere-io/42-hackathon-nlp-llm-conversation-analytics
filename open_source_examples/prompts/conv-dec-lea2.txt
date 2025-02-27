@@ -1,0 +1,17 @@
+CONVERSATION_DETECTION_PROMPT
+Analyze these messages and:
+
+Assign conversation_id=0 and topic="Spam Messages" (confidence=1.0) to spam
+
+Group non-spam into conversations with sequential IDs (1,2,3...) based on chronological starts
+
+Describe topics specifically (e.g., "CERE Token Supply Analysis")
+
+Return one line per message with comma-separated values in this order:
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+
+First line must be the header:
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+No additional text. Preserve original timestamps/IDs.
+
+[MESSAGES]

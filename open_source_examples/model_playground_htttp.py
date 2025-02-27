@@ -239,8 +239,18 @@ No headers, no quotes, no additional text."""
             # Process lines into Label objects
             labels = []
 
+            skip_think_block = False
             for line in lines:
                 try:
+                    # Skip thinking messages
+                    if line.startswith('<think>'):
+                        skip_think_block = True
+                    if skip_think_block:
+                        if line.startswith('</think>'):
+                            skip_think_block = False
+                        continue
+                    if skip_think_block:
+                        continue
                     # Skip header lines and explanatory text
                     if line.startswith('message_id,') or not ',' in line or line.startswith('Note') or line.startswith('Here'):
                         continue

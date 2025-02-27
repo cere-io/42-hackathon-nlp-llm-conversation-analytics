@@ -1,0 +1,43 @@
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+36570,1,$XTONX Wheel Drop Event,2025-01-14T01:22:38Z,mistral,
+36571,1,$XTONX Wheel Drop Event,2025-01-14T01:22:59Z,mistral,
+36572,1,$XTONX Wheel Drop Event,2025-01-14T01:23:20Z,mistral,
+36573,1,$XTONX Wheel Drop Event,2025-01-14T01:23:41Z,mistral,
+36569,2,$XTONX Wheel Giveaway,2025-01-14T01:07:38Z,mistral,
+36575,3,Wheel Bot Command,2025-01-14T02:22:38Z,mistral,
+36576,3,Wheel Bot Command,2025-01-14T02:30:26Z,mistral,
+36568,4,$XTONX Wheel Drop Event,2025-01-14T01:05:17Z,mistral,
+36567,4,$XTONX Wheel Drop Event,2025-01-14T01:04:48Z,mistral,
+36566,4,$XTONX Wheel Drop Event,2025-01-14T01:04:29Z,mistral,
+36574,5,$XTONX Wheel Drop Event,2025-01-14T02:22:38Z,mistral,
+36575,5,$XTONX Wheel Drop Event,2025-01-14T02:22:38Z,mistral,
+36565,6,$XTONX Giveaway,2025-01-14T01:02:54Z,mistral,
+36577,6,$XTONX Giveaway,2025-01-14T02:38:05Z,mistral,
+36564,7,$XTONX Wheel Drop Event,2025-01-14T01:01:25Z,mistral,
+36563,7,$XTONX Wheel Drop Event,2025-01-14T01:01:06Z,mistral,
+36562,7,$XTONX Wheel Drop Event,2025-01-14T01:00:47Z,mistral,
+36573,8,Spam Messages,2025-01-14T01:23:41Z,mistral,
+36571,9,$XTONX Wheel Drop Event,2025-01-14T01:22:59Z,mistral,
+36570,9,$XTONX Wheel Drop Event,2025-01-14T01:22:38Z,mistral,
+36566,10,$XTONX Giveaway,2025-01-14T01:04:29Z,mistral,
+36577,11,$XTONX Giveaway,2025-01-14T02:38:05Z,mistral,
+36568,12,$XTONX Wheel Drop Event,2025-01-14T01:05:17Z,mistral,
+36567,13,$XTONX Wheel Drop Event,2025-01-14T01:04:48Z,mistral,
+36565,14,$XTONX Giveaway,2025-01-14T01:02:54Z,mistral,
+36574,15,$XTONX Wheel Drop Event,2025-01-14T02:22:38Z,mistral,
+36564,16,$XTONX Wheel Drop Event,2025-01-14T01:01:25Z,mistral,
+36563,17,$XTONX Wheel Drop Event,2025-01-14T01:01:06Z,mistral,
+36562,18,$XTONX Wheel Drop Event,2025-01-14T01:00:47Z,mistral,
+36572,19,$XTONX Wheel Drop Event,2025-01-14T01:23:20Z,mistral,
+36569,20,$XTONX Wheel Giveaway,2025-01-14T01:07:38Z,mistral,
+36576,21,Wheel Bot Command,2025-01-14T02:30:26Z,mistral,
+36578,1,TONSPIN Airdrop,2025-01-14T05:17:33Z,mistral,1.0
+36580,2,$PAWS Festival and Giveaway,2025-01-14T06:46:59Z,mistral,1.0
+36582,3,Confirm Bull Run,2025-01-14T09:21:02Z,mistral,1.0
+36583,3,Froshray,2025-01-14T09:35:58Z,mistral,0.8
+36587,4,Announcement Scheduled Update,2025-01-14T09:40:36Z,mistral,1.0
+36588,4,Discussion on CERE's Q1 Alt Season,2025-01-14T09:42:06Z,mistral,1.0
+36589,4,Possibility of Updates from Bren,2025-01-14T10:03:49Z,mistral,1.0
+36590,5,Unknown Message,2025-01-14T10:11:01Z,mistral,0.0
+36592,6,XRP Memes and Pumps,2025-01-14T11:28:40Z,mistral,1.0
+36597,7,Developer Services Offered,2025-01-14T13:25:45Z,mistral,1.0

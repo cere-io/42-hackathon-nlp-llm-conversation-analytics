@@ -1,0 +1,36 @@
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+36599,1,Hans ha sshort days,20250114081900,deepseek-r1:7b,1.0
+36600,1,NSYE Event Discussion,20250114082000,deepseek-r1:7b,1.0
+36602,2,General Greeting/Announcement,20250114082900,deepseek-r1:7b,1.0
+36611,1,Bridge Update,20250114181900,deepseek-r1:7b,1.0
+36613,1,Event Follow-Up,20250114182725,deepseek-r1:7b,1.0
+36615,1,Partnerships,20250114183454,deepseek-r1:7b,1.0
+36616,2(Getting reimbursed for gas fees),2025-01-14T18:49:09Z,20250227192709,deepseek-r1:7b,1.0
+36617,1(Getting reimbursed for gas fees),2025-01-14T18:49:13Z,20250227192709,deepseek-r1:7b,1.0
+36618,1(Getting reimbursed for gas fees),2025-01-14T18:49:15Z,20250227192709,deepseek-r1:7b,1.0
+36619,1(Getting reimbursed for gas fees),2025-01-14T18:49:17Z,20250227192709,deepseek-r1:7b,1.0
+36620,3(Cere Network Integration Update),2025-01-14T18:51:27Z,20250227192709,deepseek-r1:7b,1.0
+36621,3(Cere Network Integration Update),2025-01-14T18:53:43Z,20250227192709,deepseek-r1:7b,1.0
+36622,3(Cere Network Integration Update),2025-01-14T18:56:57Z,20250227192709,deepseek-r1:7b,1.0
+36623,5(Moderator Roles),2025-01-14T21:23:47Z,20250227192709,deepseek-r1:7b,1.0
+36624,6(Ethereum Coin Making),2025-01-14T21:23:47Z,20250227192709,deepseek-r1:7b,1.0
+36628,1,TON Coin Promotion,20250115043148,deepseek-r1:7b,1.0
+36630,1,None,20250115043148,deepseek-r1:7b,1.0
+36633,2,Spam Messages,20250115043148,deepseek-r1:7b,1.0
+36634,2,Crypto Investment Offers,20250115043148,deepseek-r1:7b,1.0
+36635,2,Crypto Investment Offers,20250115043148,deepseek-r1:7b,1.0
+36638,3,No Context,20250115043148,deepseek-r1:7b,1.0
+36639,3,No Context,20250115043148,deepseek-r1:7b,1.0
+36640,3,No Context,20250115043148,deepseek-r1:7b,1.0
+36641,3,No Context,20250115043148,deepseek-r1:7b,1.0
+36642,4,None,20250115060900,deepseek-r1:7b,1.0
+36644,1,Protecting the Price Strategy,20250115072601,deepseek-r1:7b,1.0
+36646,1,Volumes are Low,20250115074713,deepseek-r1:7b,1.0
+36647,2,Bot Interaction Concerns,20250115081634,deepseek-r1:7b,1.0
+36648,2,Wondering About...,20250115081658,deepseek-r1:7b,1.0
+36652,3,Re: Protecting the Price Strategy,20250115113850,deepseek-r1:7b,1.0
+36653,3,Yes on the Price Defense,20250115114231,deepseek-r1:7b,1.0
+36654,3,N/A,20250115114319,deepseek-r1:7b,1.0
+36655,4,Bot Interaction Concerns,20250115123855,deepseek-r1:7b,1.0
+36656,4,Wondering About...,20250115131546,deepseek-r1:7b,1.0
+36657,4,Yes on the Bot Issue,20250115133251,deepseek-r1:7b,1.0
