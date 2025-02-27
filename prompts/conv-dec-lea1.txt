@@ -1,0 +1,31 @@
+CONVERSATION_DETECTION_PROMPT
+Your task is to analyze the provided message data and identify distinct conversations along with their specific topics. For each conversation, ensure the topic description is precise and reflects the actual content of the discussion. Avoid vague or overly general descriptions.
+
+Below you will find a series of messages with their IDs, timestamps, and content:
+
+[MESSAGES]
+
+Instructions:
+Output Format: Return your analysis in CSV format with the following columns:
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+
+Rules for Analysis:
+
+Spam Messages: Assign conversation_id = 0 and topic = "Spam Messages".
+
+Non-Spam Messages: Assign conversation_id in ascending order (1, 2, 3, etc.) based on the chronological start of each distinct conversation.
+
+Topic Specificity: Ensure topics are specific and accurately describe the content of the conversation. For example, instead of "Market Discussion," use "Discussion on CERE Token Price Volatility."
+
+Message Coverage: Every message ID from the input must be included in the output.
+
+Timestamp Preservation: Keep timestamps exactly as they appear in the input.
+
+Confidence Value: Provide a confidence score (0.0–1.0) reflecting your certainty about the conversation assignment.
+
+Output Requirements:
+
+Start the output with the header row:
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+
+Do not include any additional explanations or text outside the CSV data.
