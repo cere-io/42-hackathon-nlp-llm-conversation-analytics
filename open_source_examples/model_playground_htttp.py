@@ -241,6 +241,8 @@ No headers, no quotes, no additional text."""
 
             for line in lines:
                 try:
+                    # Skip thinking messages
+                if line.startswith('<think>') or line.startwith("</think>"):
                     # Skip header lines and explanatory text
                     if line.startswith('message_id,') or not ',' in line or line.startswith('Note') or line.startswith('Here'):
                         continue
