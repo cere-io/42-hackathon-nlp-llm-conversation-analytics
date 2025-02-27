@@ -91,7 +91,19 @@ class ModelLabeler:
             
             # Parse CSV response into list of dictionaries
             try:
-                csv_lines = response.message['content'].strip().split('\n')
+                # Skip lines between <think> tags in the response
+                response_data = response.message['content']
+                filtered_lines = []
+                skip = False
+                for line in response_data.split('\n'):
+                    if '<think>' in line:
+                        skip = True
+                    if not skip:
+                        filtered_lines.append(line)
+                    if '</think>' in line:
+                        skip = False
+                filtered_response = '\n'.join(filtered_lines)
+                csv_lines = filtered_response.strip().split('\n')
                 reader = csv.DictReader(csv_lines)
                 results = list(reader)
                 if not results:
