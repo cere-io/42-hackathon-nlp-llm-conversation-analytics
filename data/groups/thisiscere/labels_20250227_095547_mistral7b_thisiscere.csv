@@ -1,0 +1,31 @@
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+36598,0,Spam Messages,2025-01-14T13:30:19Z,mistral7b,0.99
+36599,1,AirDrop Event Announcement,2025-01-14T13:33:47Z,mistral7b,0.98
+36600,1,Offering Rejection,2025-01-14T13:35:27Z,mistral7b,0.99
+36602,1,New User Introduction,2025-01-14T14:26:50Z,mistral7b,0.98
+36603,1,AirDrop Event Instructions,2025-01-14T14:30:19Z,mistral7b,0.99
+36635,1,Giveaway,2025-01-15T02:52:44Z,mistral7b,0.95
+36636,1,Promotion,2025-01-15T02:52:57Z,mistral7b,0.95
+36637,1,Giveaway,2025-01-15T02:54:08Z,mistral7b,0.95
+36638,2,Partnership Inquiry,2025-01-15T04:31:48Z,mistral7b,0.9
+36639,2,Response to Partnership Inquiry,2025-01-15T04:32:30Z,mistral7b,0.9
+36640,2,Contact Information,2025-01-15T04:36:04Z,mistral7b,0.9
+36641,3,Promotion,2025-01-15T05:05:31Z,mistral7b,0.85
+36642,3,Response to Promotion,2025-01-15T06:09:00Z,mistral7b,0.85
+36644,1,Discussion on Defending Price,2025-01-15T07:26:01Z,mistral7b,0.9
+36646,1,Volume and Price Discussion,2025-01-15T07:47:13Z,mistral7b,0.8
+36647,1,Bot Interaction,2025-01-15T08:16:34Z,mistral7b,0.1
+36648,2,New Topic: Unspecified,2025-01-15T08:16:58Z,mistral7b,0.2
+36652,1,Request for Answer,2025-01-15T11:38:50Z,mistral7b,0.9
+36653,1,Answer: Yes,2025-01-15T11:42:31Z,mistral7b,0.9
+36654,1,Confirmation of Answer,2025-01-15T11:43:19Z,mistral7b,0.9
+36655,1,Discussion on Skepticism and Boosting Morale,2025-01-15T12:38:55Z,mistral7b,0.9
+36656,1,Request for Answer,2025-01-15T13:32:51Z,mistral7b,0.9
+36657,1,Answer: Yes,2025-01-15T13:39:05Z,mistral7b,0.9
+36658,1,Discussion on Boosting Morale,2025-01-15T13:41:40Z,mistral7b,0.9
+36659,2,Question about Belief,2025-01-15T13:43:43Z,mistral7b,0.8
+36660,3,Discussion on Past Experiences,2025-01-15T13:43:54Z,mistral7b,0.9
+36661,3,Remembrance of Previous Event,2025-01-15T13:43:54Z,mistral7b,0.9
+36662,3,Recognition of User,2025-01-15T13:44:28Z,mistral7b,0.9
+36663,4,Recognition of User,2025-01-15T13:57:37Z,mistral7b,0.8
+36664,4,Appreciation for User,2025-01-15T13:59:11Z,mistral7b,0.8
