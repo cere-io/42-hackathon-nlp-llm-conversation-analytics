@@ -1,0 +1,28 @@
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+36615,1,PARTNERSHIPS,20250114183454,deepseek-r1:7b,1.0
+36616,1,GAS FEES AND REIMBURSEMENT,20250114184909,deepseek-r1:7b,1.0
+36617,1,GAS FEES AND REIMBURSEMENT,20250114184913,deepseek-r1:7b,1.0
+36618,1,GAS FEES AND REIMBURSEMENT,20250114184915,deepseek-r1:7b,1.0
+36619,1,GAS FEES AND REIMBURSEMENT,20250114184917,deepseek-r1:7b,1.0
+36620,1,GAS FEES AND REIMBURSEMENT,20250114185127,deepseek-r1:7b,1.0
+36621,2,INTEGRATION UPDATE,20250227201551,deepseek-r1:7b,1.0
+36623,3,SPAM_MESSAGES,20250227201551,deepseek-r1:7b,1.0
+36626,4,MODERATOR ROLES,20250227201551,deepseek-r1:7b,1.0
+36627,5,ADVANCED AUTOMATION TUTORIAL,20250227201551,deepseek-r1:7b,1.0
+36628,1,Ton Coin Promotion - Crypto Offers,20250115043600,deepseek-r1:7b,1.0
+36630,1,General Interest in Offers - Not Promoting,20250115043800,deepseek-r1:7b,1.0
+36633,1,Ton Coin Promotion - New Year's Special deal,20250115052900,deepseek-r1:7b,1.0
+36634,2,$PAWS Tokens Promotion - Holiday Vibes,20250115063100,deepseek-r1:7b,1.0
+36635,1,Ton Coin Promotion - New Year's Bot deal,20250115045800,deepseek-r1:7b,1.0
+36638,3,Tech Partnership Discussion,20250115062900,deepseek-r1:7b,1.0
+36639,3,Proposals for Projects - Social Platform,20250115063800,deepseek-r1:7b,1.0
+36640,3,Crypto News - New Investments,20250115070900,deepseek-r1:7b,1.0
+36641,3,Crypto News - Profit Goals,20250115080500,deepseek-r1:7b,1.0
+36642,4,Ethereum Profits using Smart Bots,20250115091600,deepseek-r1:7b,1.0
+36658,1,Market Trends and Skepticism among Old Holders,20250115133905,deepseek-r1:7b,1.0
+36659,1,Mentions of Belief and Recent Events,20250115134140,deepseek-r1:7b,1.0
+36660,1,Pandemic Reflections and Longitudinal Change,20250115134140,deepseek-r1:7b,1.0
+36661,1,Community Dynamics and OG Status,20250115134140,deepseek-r1:7b,1.0
+36662,1,Newcomer's Perspective on Established Figures,20250115134140,deepseek-r1:7b,1.0
+36663,1,Acknowledgment and Continuation of Earlier Comments,20250115134140,deepseek-r1:7b,1.0
+36664,1,Reiteration of Community-Specific Observations,20250115134140,deepseek-r1:7b,1.0
