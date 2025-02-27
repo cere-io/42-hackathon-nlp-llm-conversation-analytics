@@ -1,0 +1,48 @@
+message_id,conversation_id,topic,timestamp,labeler_id,confidence
+36578,0,Spam Messages,20250114051733,deepseek-r1:70b,1.0
+36580,0,Spam Messages,20250114064659,deepseek-r1:70b,1.0
+36582,1,Cryptocurrency Bull Run Discussion,20250114092102,deepseek-r1:70b,1.0
+36583,0,Spam Messages,20250114093558,deepseek-r1:70b,1.0
+36587,1,Cryptocurrency Market Updates and Announcements,20250114094036,deepseek-r1:70b,1.0
+36588,1,Altcoin Performance and Seasonal Trends,20250114094206,deepseek-r1:70b,1.0
+36589,1,Project-Specific Updates and Announcements,20250114100300,deepseek-r1:70b,1.0
+36590,0,Spam Messages,20250114100500,deepseek-r1:70b,1.0
+36592,1,Cryptocurrency Price Movements and Market Opportunities,20250114101000,deepseek-r1:70b,1.0
+36597,0,Spam Messages,20250114101500,deepseek-r1:70b,1.0
+36599,1,Stock Market Updates,20231006134100,deepseek-r1:70b,1.0
+36600,1,Stock Market Updates,20231006140100,deepseek-r1:70b,1.0
+36602,2,Business Development Outreach,20231006153000,deepseek-r1:70b,1.0
+36603,2,Business Development Outreach,20231006160000,deepseek-r1:70b,1.0
+36605,0,Spam Messages,20231006174500,deepseek-r1:70b,1.0
+36607,3,Greeting,20231006181100,deepseek-r1:70b,1.0
+36608,2,Business Development Outreach,20231006190100,deepseek-r1:70b,1.0
+36610,0,Spam Messages,20231006203000,deepseek-r1:70b,1.0
+36611,1,Stock Market Updates,20231006211900,deepseek-r1:70b,1.0
+36613,4,Bridge Update,20231006222700,deepseek-r1:70b,1.0
+36615,1,"""Project Status & Partnerships""",20250114183454,deepseek-r1:70b,1.0
+36616,2,"""Gas Fee Reimbursement Site""",20250114184909,deepseek-r1:70b,1.0
+36617,2,"""Gas Fee Reimbursement Site""",20250114184913,deepseek-r1:70b,1.0
+36618,2,"""Gas Fee Reimbursement Site""",20250114184915,deepseek-r1:70b,1.0
+36619,2,"""Gas Fee Reimbursement Site""",20250114184917,deepseek-r1:70b,1.0
+36620,3,"""Cere Network & Hyperbridge Integration""",20250114185127,deepseek-r1:70b,1.0
+36621,3,"""Cere Network & Hyperbridge Integration""",20250114185343,deepseek-r1:70b,1.0
+36623,0,"""Spam Messages""",20250114185657,deepseek-r1:70b,1.0
+36626,4,"""Moderator Role Inquiry""",20250114212347,deepseek-r1:70b,1.0
+36627,0,"""Spam Messages""",20250114220201,deepseek-r1:70b,1.0
+36628,0,"""Spam Messages""",20231016094500,deepseek-r1:70b,1.0
+36630,3,"""Decline Response""",20231016101500,deepseek-r1:70b,1.0
+36633,1,"""Dog New Year Event""",20231016113000,deepseek-r1:70b,1.0
+36634,0,"""Spam Messages""",20231016120000,deepseek-r1:70b,1.0
+36635,1,"""Dog New Year Event""",20231016131500,deepseek-r1:70b,1.0
+36638,2,"""Business Partnership Inquiry""",20231016143000,deepseek-r1:70b,1.0
+36639,2,"""Business Response""",20231016143500,deepseek-r1:70b,1.0
+36640,2,"""Expectation Expression""",20231016150500,deepseek-r1:70b,1.0
+36641,2,"""Positive Affirmation""",20231016162000,deepseek-r1:70b,1.0
+36642,0,"""Spam Messages""",20231017070000,deepseek-r1:70b,1.0
+36658,1,Community Engagement & Support,20250115133905,deepseek-r1:70b,1.0
+36659,1,Community Engagement & Support,20250115134140,deepseek-r1:70b,1.0
+36660,2,Nostalgia & Community History,20250115134343,deepseek-r1:70b,1.0
+36661,2,Nostalgia & Community History,20250115134354,deepseek-r1:70b,1.0
+36662,2,Nostalgia & Community History,20250115134428,deepseek-r1:70b,1.0
+36663,3,Community Leadership Influence,20250115135737,deepseek-r1:70b,1.0
+36664,3,Community Leadership Influence,20250115135911,deepseek-r1:70b,1.0
