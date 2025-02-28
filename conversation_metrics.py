@@ -40,6 +40,9 @@ def load_model_predictions(label_file: Path) -> pd.DataFrame:
         required_columns = {'message_id', 'conversation_id'}
         if not all(col in df.columns for col in required_columns):
             raise ValueError(f"Label file must contain columns: {required_columns}")
+        if df.empty:
+            logger.warning(f"Label file {label_file} contains zero messages.")
+            return None
         return df[['message_id', 'conversation_id']]
     except Exception as e:
         logger.error(f"Error loading predictions from {label_file}: {e}")
@@ -109,6 +112,8 @@ def evaluate_conversation_clustering(group_dir: str) -> None:
         
         try:
             predictions = load_model_predictions(label_file)
+            if predictions is None:
+                continue
             metrics = calculate_ari(ground_truth, predictions)
             
             # Add model name and file info to metrics
