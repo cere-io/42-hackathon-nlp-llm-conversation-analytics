@@ -12,7 +12,7 @@ This section evaluates your understanding of NLP concepts and your ability to im
 <summary>1. Data Analysis and NLP - Parse and clean conversation data, implementing basic NLP operations from scratch</summary>
 
 **Requirements:**
-- Parse the dataset from: `data/groups/thisiscere/messages_thisiscere.csv`
+- Parse the dataset from: [`data/groups/thisiscere/messages_thisiscere.csv`](https://github.com/cere-io/42-hackathon-nlp-llm-conversation-analytics/blob/master/data/groups/thisiscere/messages_thisiscere.csv)
 - Implement data cleaning operations:
   - Handle missing values
   - Remove irrelevant columns
