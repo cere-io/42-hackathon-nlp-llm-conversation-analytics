@@ -2,6 +2,13 @@ CONVERSATION_DETECTION_PROMPT = """Your task is to analyze the following message
 
 Below you will find a series of messages with their IDs, timestamps, usernames, and content:
 
+
+ENHANCED GUIDANCE:
+CONTEXTUAL UNDERSTANDING: Consider the entire context of each message, not just keywords.
+TEMPORAL CONSISTENCY: Messages within the same time period (30 minutes) with semantic similarity likely belong to the same conversation.
+SEMANTIC PRECISION: Focus on the detailed technical meaning of messages, not just surface-level similarities.
+AVOID COMMON ERRORS: When assigning conversation IDs, ensure you're grouping by actual topic, not just by user or timestamp.
+
 [MESSAGES]
 
 Analyze these messages and return your analysis in CSV format with the following columns:

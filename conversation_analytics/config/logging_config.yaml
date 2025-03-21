@@ -1,0 +1,50 @@
+# Secure Logging Configuration
+
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  standard:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  json:
+    class: pythonjsonlogger.jsonlogger.JsonFormatter
+    format: '%(asctime)s %(name)s %(levelname)s %(message)s'
+
+filters:
+  sensitive_data:
+    (): conversation_analytics.utils.log_filters.SensitiveDataFilter
+    patterns: ['api_key', 'token', 'password']
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: standard
+    filters: [sensitive_data]
+    stream: ext://sys.stdout
+
+  file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filters: [sensitive_data]
+    filename: logs/app.log
+    maxBytes: 5242880  # 5MB
+    backupCount: 3
+    encoding: utf8
+
+loggers:
+  conversation_analytics:
+    level: INFO
+    handlers: [console, file]
+    propagate: no
+
+  # Third-party loggers
+  ollama:
+    level: WARNING
+    handlers: [console, file]
+    propagate: false
+
+root:
+  level: WARNING
+  handlers: [console] 

@@ -1,9 +1,14 @@
+# Data and results
+data/groups/*/labels_*
+results/
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -19,25 +24,53 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.python-version
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.venv
 venv/
-env/
 ENV/
-.env/
-.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Virtual Environment
+venv/
+ENV/
+
+# Generated files and metrics
+data/groups/*/labels_*.csv
+data/groups/*/metrics_*.csv
+
+# Local development
+.env.local
+*.log
+
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and Editor files
+.cursor/
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # Node.js
 node_modules/
@@ -52,15 +85,11 @@ yarn-error.log*
 /dist
 
 # Environment files
-.env
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
 # IDE and editor files
-.idea/
-.vscode/
 *.swp
 *.swo
 *.swn

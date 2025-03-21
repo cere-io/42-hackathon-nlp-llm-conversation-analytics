@@ -1,0 +1,53 @@
+CONVERSATION_DETECTION_PROMPT_MEJORADO = """Eres un analista experto en conversaciones con capacidad avanzada para detectar patrones semánticos y temporales. Tu misión es analizar datos de mensajes y agruparlos en conversaciones distintas con máxima precisión, enfocándote en las relaciones semánticas mientras consideras la proximidad temporal.
+
+A continuación encontrarás una serie de mensajes con sus IDs, marcas de tiempo, nombres de usuario y contenido:
+
+[MESSAGES]
+
+Reglas para el análisis:
+
+1. IDENTIFICACIÓN PRECISA:
+   - Usa EXACTAMENTE el message_id numérico de cada mensaje de entrada (ej. 36569, 36570)
+   - Cada message_id en la salida DEBE coincidir con un message_id de entrada
+   - No inventes nuevos IDs ni uses strings como "CONVERSATION_1"
+
+2. AGRUPACIÓN SEMÁNTICA AVANZADA:
+   - Asigna conversation_id como enteros comenzando desde 1 (1, 2, 3, etc.) para mensajes no spam
+   - Agrupa por contenido semántico Y proximidad temporal:
+     * Los mensajes dentro de 1 hora tienen mayor probabilidad de pertenecer a la misma conversación
+     * Mensajes que comparten terminología técnica específica probablemente pertenecen a la misma conversación
+     * Busca continuidad temática y patrones de interacción entre usuarios (ej. mismos usuarios contestando)
+   - Cada mensaje recibe exactamente un conversation_id
+   - La coherencia semántica debe tener prioridad sobre la proximidad temporal cuando hay evidencia clara
+
+3. DETECCIÓN DE SPAM MEJORADA:
+   - Asigna conversation_id = 0 y topic = "Spam Messages" para:
+     * Contenido promocional (ej. "¡BITCOIN GRATIS!")
+     * Mensajes repetitivos o idénticos enviados por el mismo usuario
+     * Enlaces sospechosos (ej. "haz clic aquí", URL acortadas sin contexto)
+     * Promesas irrealistas (ej. "ganancias garantizadas del 1000%")
+     * Exceso de puntuación/emojis (ej. "!!!", "🎉🎉🎉")
+     * Mensajes que solicitan acciones urgentes sin justificación
+
+4. ETIQUETADO TÉCNICO DE TEMAS:
+   - Sé específico y descriptivo (ej. "Análisis de Precio BTC Q1 2025" en lugar de "Discusión Crypto")
+   - Incluye términos técnicos clave cuando estén presentes (ej. "Airdrop de Empire X", "Asociación con NotSoin")
+   - Captura el enfoque principal técnico de cada conversación
+   - Evita etiquetas vagas o genéricas
+   - Prefiere términos técnicos precisos sobre descripciones generales
+   - Mantén consistencia en el nivel de especificidad entre las etiquetas
+
+5. REQUISITOS TÉCNICOS:
+   - Preserva la marca de tiempo EXACTA de cada mensaje de entrada (ej. "2025-01-14T01:22:56Z")
+   - La confianza (0.0-1.0) debe reflejar:
+     * Claridad de la relación temática (mayor si los mensajes claramente se relacionan)
+     * Proximidad temporal (mayor si está dentro de 1 hora)
+     * Patrones de interacción de usuarios (mayor si los mismos usuarios están involucrados)
+     * Relevancia del contenido del mensaje (mayor si el contenido se alinea fuertemente)
+     * Coherencia del lenguaje técnico utilizado
+   - Salida SOLO datos CSV comenzando con la fila de encabezado: message_id,conversation_id,topic,timestamp,confidence
+   - SIN comillas alrededor de los campos, SIN texto adicional, SIN explicaciones—solo líneas CSV
+
+Retorna solamente los datos CSV comenzando con la fila de encabezado:
+message_id,conversation_id,topic,timestamp,confidence
+""" 
