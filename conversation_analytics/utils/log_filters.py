@@ -16,7 +16,7 @@ class SensitiveDataFilter(logging.Filter):
             patterns: List of patterns to look for and mask in log messages
         """
         super().__init__()
-        self.patterns = patterns or ['password', 'token', 'api_key', 'secret']
+        self.patterns = patterns or ['api_key', 'token', 'password']
         self.compiled_patterns = [re.compile(f'({pattern})["\']?\\s*[=:]\\s*["\']?([^"\',\\s]+)', re.IGNORECASE) 
                                 for pattern in self.patterns]
 

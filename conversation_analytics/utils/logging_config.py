@@ -27,19 +27,16 @@ def setup_logging(config_path: Optional[str] = None) -> None:
     log_dir = Path(tempfile.gettempdir()) / 'conversation_analytics' / 'logs'
     log_dir.mkdir(exist_ok=True, parents=True)
     
-    # Create log files if they don't exist
+    # Create log file if it doesn't exist
     app_log = log_dir / 'app.log'
-    error_log = log_dir / 'error.log'
     app_log.touch(exist_ok=True)
-    error_log.touch(exist_ok=True)
     
     # Load configuration
     with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     
-    # Update log file paths to use temp directory
+    # Update log file path to use temp directory
     config['handlers']['file']['filename'] = str(app_log)
-    config['handlers']['error_file']['filename'] = str(error_log)
     
     logging.config.dictConfig(config)
     

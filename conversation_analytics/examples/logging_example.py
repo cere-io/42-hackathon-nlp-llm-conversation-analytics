@@ -11,40 +11,29 @@ def main():
     # Get logger instance
     logger = get_logger(__name__)
     
-    # Test sensitive data filtering in string messages
-    logger.info("Starting application with API key: abc123xyz")
-    logger.debug("User token=sensitive_token_123")
-    logger.warning("Database password='super_secret'")
+    # Simulate a real-world scenario
+    logger.info("Starting conversation analysis")
     
-    # Test sensitive data filtering in dictionaries
+    # Example of processing user data
     user_data = {
-        "username": "john_doe",
-        "password": "secret123",
-        "api_key": "xyz789abc",
-        "settings": {
-            "token": "jwt_token_here",
-            "preferences": {
-                "theme": "dark",
-                "secret_key": "nested_secret"
-            }
+        "user_id": "user123",
+        "email": "user@example.com",
+        "api_key": "sk_live_123456789",  # This will be masked
+        "preferences": {
+            "theme": "dark",
+            "language": "es"
         }
     }
     
-    logger.info("User data: %s", user_data)
+    logger.info("Processing user data: %s", user_data)
     
-    # Test sensitive data in error context
+    # Example of error handling
     try:
-        raise ValueError("Failed to authenticate with token=abc123")
+        # Simulate an API call
+        raise ConnectionError("Failed to connect to API with token=abc123")
     except Exception as e:
-        logger.error("Error occurred: %s", str(e), exc_info=True)
-
-    # Test non-sensitive data remains unchanged
-    logger.info("Normal message with no secrets")
-    logger.debug({
-        "user": "john",
-        "theme": "dark",
-        "status": "active"
-    })
+        logger.error("API connection error: %s", str(e), exc_info=True)
+        logger.info("Retrying with backup endpoint...")
 
 if __name__ == "__main__":
     main() 
