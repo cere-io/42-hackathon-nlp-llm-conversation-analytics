@@ -1,3 +1,7 @@
+# Data and results
+data/groups/*/labels_*
+results/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -21,6 +25,26 @@ wheels/
 .installed.cfg
 *.egg
 
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.venv
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
 # Virtual Environment
 venv/
 ENV/
@@ -30,12 +54,10 @@ data/groups/*/labels_*.csv
 data/groups/*/metrics_*.csv
 
 # Local development
-.env
 .env.local
 *.log
 
 # OS generated files
-.DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
