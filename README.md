@@ -1,90 +1,176 @@
-# Conversation Detection System
+# Conversation Analytics System
 
-## Descripción
-Sistema avanzado para la detección y agrupación de conversaciones en mensajes de chat, utilizando técnicas de procesamiento de lenguaje natural y aprendizaje automático.
+## Description
+Advanced system for detecting and grouping conversations in chat messages using natural language processing and machine learning techniques.
 
-## Características Principales
-- Detección automática de conversaciones usando múltiples técnicas
-- Pre-agrupación basada en tiempo, semántica y patrones de usuario
-- Evaluación exhaustiva con múltiples métricas
-- Visualizaciones detalladas de resultados
-- Soporte para diferentes modelos de lenguaje
+## Key Features
+- Automatic conversation detection using multiple techniques
+- Pre-grouping based on time, semantics, and user patterns
+- Comprehensive evaluation with multiple metrics
+- Detailed result visualizations
+- Support for different language models
 
-## Requisitos
+## Requirements
 - Python 3.8+
-- Dependencias listadas en `requirements.txt`
-- GPU opcional (recomendado para modelos grandes)
+- Dependencies listed in `requirements.txt`
+- GPU optional (recommended for large models)
 
-## Instalación
+## Installation
+
+### Using pip
 ```bash
-# Crear entorno virtual
+pip install conversation-analytics
+```
+
+### From source
+```bash
+# Clone the repository
+git clone https://github.com/zyra-audition/conversation-analytics.git
+cd conversation-analytics
+
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 
-# Instalar dependencias
-pip install -r requirements.txt
+# Install dependencies
+pip install -r config/requirements.txt
+
+# Install in development mode
+pip install -e .
 ```
 
-## Estructura del Proyecto
+## Project Structure
 ```
 .
 ├── src/
-│   ├── metrics/          # Módulos de evaluación
-│   ├── models/          # Modelos de ML
-│   └── utils/           # Utilidades comunes
-├── optimization/        # Scripts de optimización
-├── evaluation/         # Scripts de evaluación
-├── tests/             # Tests unitarios
-├── data/              # Datos de entrada/salida
-└── results/           # Resultados y visualizaciones
+│   ├── processors/     # Data processing components
+│   ├── detectors/      # Detection algorithms
+│   ├── metrics/        # Evaluation metrics
+│   ├── models/         # ML model implementations
+│   └── utils/          # Utility functions
+├── optimization/       # Optimization scripts
+├── evaluation/        # Evaluation scripts
+├── tests/            # Unit tests
+├── data/             # Input/output data
+└── results/          # Results and visualizations
 ```
 
-## Uso
+## Usage
 
-### Pre-agrupación de Mensajes
+### Basic Usage
+```python
+from conversation_analytics import ConversationDetector, TextVectorizer
+
+# Initialize components
+vectorizer = TextVectorizer()
+detector = ConversationDetector()
+
+# Process messages
+messages = [...]  # Your messages here
+conversations = detector.detect(messages)
+```
+
+### Command Line Interface
 ```bash
-python optimization/pre_grouping_techniques.py data/groups/thisiscere/messages_thisiscere.csv
+# Pre-group messages
+conversation-analytics pre-group data/groups/example/messages.csv
+
+# Evaluate results
+conversation-analytics evaluate data/groups/example
+
+# Optimize models
+conversation-analytics optimize data/groups/example/messages.csv
 ```
 
-### Evaluación de Resultados
-```bash
-python src/metrics/conversation_metrics.py data/groups/thisiscere
+## API Documentation
+
+### TextVectorizer
+```python
+class TextVectorizer:
+    """
+    Converts text data into numerical vectors using TF-IDF.
+    
+    Args:
+        max_features (int): Maximum number of features to extract
+        n_components (int, optional): Number of components for dimensionality reduction
+        cache_ttl (int): Time-to-live for vector cache in seconds
+    """
 ```
 
-### Optimización de Modelos
-```bash
-python optimization/experiment_models.py data/groups/thisiscere/messages_thisiscere.csv
+### ConversationDetector
+```python
+class ConversationDetector:
+    """
+    Detects and groups conversations in message sequences.
+    
+    Args:
+        batch_size (int): Number of messages to process in each batch
+        cache_dir (str): Directory for cache storage
+    """
 ```
 
-## Métricas y Evaluación
-El sistema utiliza múltiples métricas para evaluar la calidad de las agrupaciones:
+## Metrics and Evaluation
+The system uses multiple metrics to evaluate grouping quality:
 - Adjusted Rand Index (ARI)
-- Coherencia temporal
-- Coherencia semántica
-- Estadísticas de grupos
+- Temporal coherence
+- Semantic coherence
+- Group statistics
 
-## Visualizaciones
-- Gráficos de puntuación ARI a lo largo del tiempo
-- Métricas de coherencia
-- Mapas de calor de correlación
-- Visualizaciones de grupos temporales
+## Visualizations
+- ARI score plots over time
+- Coherence metrics
+- Correlation heatmaps
+- Temporal group visualizations
 
-## Contribución
-1. Fork el repositorio
-2. Cree una rama para su feature (`git checkout -b feature/AmazingFeature`)
-3. Commit sus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abra un Pull Request
+## Development
 
-## Licencia
-Este proyecto está licenciado bajo la Licencia MIT - vea el archivo `LICENSE` para más detalles.
+### Running Tests
+```bash
+pytest tests/
+```
 
-## Contacto
-Nombre - [@twitter_handle](https://twitter.com/twitter_handle)
-Email - email@example.com
+### Code Style
+```bash
+# Format code
+black .
 
-## Agradecimientos
-- Agradecimiento especial a todos los contribuidores
-- Inspirado en las mejores prácticas de NLP y análisis de conversaciones
-- Basado en investigaciones recientes en el campo de procesamiento de lenguaje natural 
+# Sort imports
+isort .
+
+# Type checking
+mypy .
+```
+
+### Security Checks
+```bash
+# Run security checks
+bandit -r src/
+safety check
+```
+
+## Contributing
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Development Guidelines
+- Follow PEP 8 style guide
+- Add type hints to all functions
+- Write docstrings for all public APIs
+- Add tests for new features
+- Update documentation as needed
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+- Email: contact@zyra-audition.com
+- GitHub: [@zyra-audition](https://github.com/zyra-audition)
+
+## Acknowledgments
+- Special thanks to all contributors
+- Inspired by best practices in NLP and conversation analysis
+- Based on recent research in natural language processing 
