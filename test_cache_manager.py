@@ -91,6 +91,7 @@ class TestCacheManager(unittest.TestCase):
         class NonSerializable:
             pass
             
+        # Should handle non-serializable value gracefully
         self.cache.set("key1", NonSerializable())
         self.assertIsNone(self.cache.get("key1"))
         
@@ -129,9 +130,13 @@ class TestCacheManager(unittest.TestCase):
         with self.assertRaises(ValueError):
             CacheManager(cache_dir=self.temp_dir, max_size=0)
             
-        # Test invalid cache directory
+        # Test invalid cache directory (using a file instead of a directory)
+        invalid_dir = os.path.join(self.temp_dir, "invalid_dir")
+        with open(invalid_dir, "w") as f:
+            f.write("test")
+            
         with self.assertRaises(OSError):
-            CacheManager(cache_dir="/invalid/path/that/does/not/exist")
+            CacheManager(cache_dir=invalid_dir)
             
         # Test corrupted cache file
         cache_file = Path(self.temp_dir) / "corrupted.json"

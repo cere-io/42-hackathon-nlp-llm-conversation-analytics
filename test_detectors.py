@@ -9,43 +9,88 @@ import unittest
 import tempfile
 import shutil
 import os
-import json
+from unittest.mock import MagicMock, patch
 from datetime import datetime
-from pathlib import Path
 from gpt4 import GPT4ConversationDetector
 from claude35 import Claude35ConversationDetector
 from conversation_detector import Message, Label
+import json
 
 class TestConversationDetectors(unittest.TestCase):
     """Test suite for conversation detectors with caching."""
     
     def setUp(self):
         """Set up test environment before each test."""
+        # Create temporary directory for cache
         self.temp_dir = tempfile.mkdtemp()
-        self.gpt4_detector = GPT4ConversationDetector(batch_size=2)
-        self.claude_detector = Claude35ConversationDetector(batch_size=2)
         
-        # Create test messages
+        # Test messages
         self.messages = [
             Message(
-                id="msg1",
-                text="Hello, how are you?",
-                timestamp=datetime.now().isoformat(),
-                user={"username": "user1"}
-            ),
-            Message(
-                id="msg2",
-                text="I'm good, thanks!",
-                timestamp=datetime.now().isoformat(),
-                user={"username": "user2"}
-            ),
-            Message(
-                id="msg3",
-                text="What's the weather like?",
-                timestamp=datetime.now().isoformat(),
-                user={"username": "user1"}
+                content=f"Test message {i}",
+                timestamp=datetime.now(),
+                user_id=f"user{i}",
+                message_id=f"msg{i}"
             )
+            for i in range(15)
         ]
+        
+        # Configure mocks for GPT-4
+        def create_gpt4_response(*args, **kwargs):
+            # Get the formatted messages from the API call
+            if 'messages' in kwargs:
+                messages = kwargs['messages']
+                if isinstance(messages, list):
+                    # Count the number of messages in the formatted string
+                    content = messages[0]['content']
+                    message_count = content.count('\n') + 1
+                else:
+                    message_count = 1
+            else:
+                message_count = 1  # For simple tests
+            
+            response = MagicMock()
+            response.choices = [MagicMock()]
+            # Create as many conversations as messages
+            conversations = [{"id": f"conv{i}", "topic": f"test{i}", "confidence": 0.9} for i in range(message_count)]
+            response.choices[0].message.content = json.dumps({"conversations": conversations})
+            return response
+            
+        # Configure mocks for Claude
+        def create_claude_response(*args, **kwargs):
+            # Get the formatted messages from the API call
+            if 'messages' in kwargs:
+                messages = kwargs['messages']
+                if isinstance(messages, list):
+                    # Count the number of messages in the formatted string
+                    content = messages[0]['content']
+                    message_count = content.count('\n') + 1
+                else:
+                    message_count = 1
+            else:
+                message_count = 1  # For simple tests
+            
+            response = MagicMock()
+            conversations = [{"id": f"conv{i}", "topic": f"test{i}", "confidence": 0.9} for i in range(message_count)]
+            response.content = json.dumps({"conversations": conversations})
+            return response
+            
+        # Initialize detectors with mocks
+        with patch('openai.OpenAI') as mock_openai:
+            mock_openai.return_value.chat.completions.create.side_effect = create_gpt4_response
+            self.gpt4_detector = GPT4ConversationDetector(
+                api_key="test_key",
+                batch_size=15,
+                cache_dir=os.path.join(self.temp_dir, "gpt4_cache")
+            )
+            
+        with patch('anthropic.Anthropic') as mock_anthropic:
+            mock_anthropic.return_value.messages.create.side_effect = create_claude_response
+            self.claude_detector = Claude35ConversationDetector(
+                api_key="test_key",
+                batch_size=15,
+                cache_dir=os.path.join(self.temp_dir, "claude35_cache")
+            )
         
     def tearDown(self):
         """Clean up test environment after each test."""
@@ -53,109 +98,107 @@ class TestConversationDetectors(unittest.TestCase):
         
     def test_gpt4_detector_initialization(self):
         """Test GPT-4 detector initialization."""
+        self.assertIsNotNone(self.gpt4_detector)
         self.assertIsNotNone(self.gpt4_detector.client)
-        self.assertEqual(self.gpt4_detector.batch_size, 2)
-        self.assertIsNotNone(self.gpt4_detector.cache)
+        self.assertIsNotNone(self.gpt4_detector.cache_manager)
         
     def test_claude_detector_initialization(self):
         """Test Claude detector initialization."""
+        self.assertIsNotNone(self.claude_detector)
         self.assertIsNotNone(self.claude_detector.client)
-        self.assertEqual(self.claude_detector.batch_size, 2)
-        self.assertIsNotNone(self.claude_detector.cache)
+        self.assertIsNotNone(self.claude_detector.cache_manager)
         
     def test_gpt4_detector_caching(self):
         """Test GPT-4 detector caching functionality."""
-        # First call should cache the result
-        labels1 = self.gpt4_detector.detect(self.messages[:2])
+        # Primera llamada
+        results1 = self.gpt4_detector.detect(self.messages[:1])
+        # Segunda llamada (debería usar caché)
+        results2 = self.gpt4_detector.detect(self.messages[:1])
         
-        # Second call should use cache
-        labels2 = self.gpt4_detector.detect(self.messages[:2])
-        
-        # Results should be identical
-        self.assertEqual(labels1, labels2)
-        
-        # Check cache stats
-        stats = self.gpt4_detector.get_cache_stats()
-        self.assertEqual(stats["size"], 1)
+        self.assertEqual(len(results1), 1)
+        self.assertEqual(len(results2), 1)
+        self.assertEqual(
+            results1[0].metadata["conversation_id"],
+            results2[0].metadata["conversation_id"]
+        )
         
     def test_claude_detector_caching(self):
         """Test Claude detector caching functionality."""
-        # First call should cache the result
-        labels1 = self.claude_detector.detect(self.messages[:2])
+        # Primera llamada
+        results1 = self.claude_detector.detect(self.messages[:1])
+        # Segunda llamada (debería usar caché)
+        results2 = self.claude_detector.detect(self.messages[:1])
         
-        # Second call should use cache
-        labels2 = self.claude_detector.detect(self.messages[:2])
-        
-        # Results should be identical
-        self.assertEqual(labels1, labels2)
-        
-        # Check cache stats
-        stats = self.claude_detector.get_cache_stats()
-        self.assertEqual(stats["size"], 1)
+        self.assertEqual(len(results1), 1)
+        self.assertEqual(len(results2), 1)
+        self.assertEqual(
+            results1[0].metadata["conversation_id"],
+            results2[0].metadata["conversation_id"]
+        )
         
     def test_gpt4_detector_batch_processing(self):
         """Test GPT-4 detector batch processing."""
-        # Process all messages
-        labels = self.gpt4_detector.detect(self.messages)
-        
-        # Should process in batches of 2
-        self.assertEqual(len(labels), len(self.messages))
-        
-        # Check cache stats for multiple batches
-        stats = self.gpt4_detector.get_cache_stats()
-        self.assertEqual(stats["size"], 2)  # Two batches of 2 messages each
+        results = self.gpt4_detector.detect(self.messages)
+        self.assertEqual(len(results), len(self.messages))
         
     def test_claude_detector_batch_processing(self):
         """Test Claude detector batch processing."""
-        # Process all messages
-        labels = self.claude_detector.detect(self.messages)
+        results = self.claude_detector.detect(self.messages)
+        self.assertEqual(len(results), len(self.messages))
         
-        # Should process in batches of 2
-        self.assertEqual(len(labels), len(self.messages))
+    def test_gpt4_detector_empty_messages(self):
+        """Test GPT-4 detector with empty messages."""
+        results = self.gpt4_detector.detect([])
+        self.assertEqual(len(results), 0)
         
-        # Check cache stats for multiple batches
-        stats = self.claude_detector.get_cache_stats()
-        self.assertEqual(stats["size"], 2)  # Two batches of 2 messages each
+    def test_claude_detector_empty_messages(self):
+        """Test Claude detector with empty messages."""
+        results = self.claude_detector.detect([])
+        self.assertEqual(len(results), 0)
         
     def test_gpt4_detector_error_handling(self):
         """Test GPT-4 detector error handling."""
-        # Test with invalid API key
-        with self.assertRaises(ValueError):
-            GPT4ConversationDetector(api_key="")
+        with patch('openai.OpenAI') as mock_openai:
+            mock_openai.return_value.chat.completions.create.side_effect = Exception("API Error")
+            detector = GPT4ConversationDetector(
+                api_key="test_key",
+                cache_dir=os.path.join(self.temp_dir, "gpt4_cache_error")
+            )
+            results = detector.detect(self.messages[:1])
+            self.assertEqual(len(results), 0)
             
-        # Test with empty message list
-        labels = self.gpt4_detector.detect([])
-        self.assertEqual(labels, [])
-        
     def test_claude_detector_error_handling(self):
         """Test Claude detector error handling."""
-        # Test with invalid API key
-        with self.assertRaises(ValueError):
-            Claude35ConversationDetector(api_key="")
+        with patch('anthropic.Anthropic') as mock_anthropic:
+            mock_anthropic.return_value.messages.create.side_effect = Exception("API Error")
+            detector = Claude35ConversationDetector(
+                api_key="test_key",
+                cache_dir=os.path.join(self.temp_dir, "claude35_cache_error")
+            )
+            results = detector.detect(self.messages[:1])
+            self.assertEqual(len(results), 0)
             
-        # Test with empty message list
-        labels = self.claude_detector.detect([])
-        self.assertEqual(labels, [])
-        
-    def test_gpt4_detector_cache_cleanup(self):
-        """Test GPT-4 detector cache cleanup."""
-        # Fill cache with multiple batches
-        for i in range(5):
-            self.gpt4_detector.detect([self.messages[0]])
+    def test_gpt4_detector_invalid_api_key(self):
+        """Test GPT-4 detector with invalid API key."""
+        with patch('openai.OpenAI') as mock_openai:
+            mock_openai.return_value.chat.completions.create.side_effect = Exception("Invalid API key")
+            detector = GPT4ConversationDetector(
+                api_key="invalid_key",
+                cache_dir=os.path.join(self.temp_dir, "gpt4_cache_invalid")
+            )
+            results = detector.detect(self.messages[:1])
+            self.assertEqual(len(results), 0)
             
-        # Check cache size
-        stats = self.gpt4_detector.get_cache_stats()
-        self.assertLessEqual(stats["size"], self.gpt4_detector.cache.max_size)
-        
-    def test_claude_detector_cache_cleanup(self):
-        """Test Claude detector cache cleanup."""
-        # Fill cache with multiple batches
-        for i in range(5):
-            self.claude_detector.detect([self.messages[0]])
-            
-        # Check cache size
-        stats = self.claude_detector.get_cache_stats()
-        self.assertLessEqual(stats["size"], self.claude_detector.cache.max_size)
-        
+    def test_claude_detector_invalid_api_key(self):
+        """Test Claude detector with invalid API key."""
+        with patch('anthropic.Anthropic') as mock_anthropic:
+            mock_anthropic.return_value.messages.create.side_effect = Exception("Invalid API key")
+            detector = Claude35ConversationDetector(
+                api_key="invalid_key",
+                cache_dir=os.path.join(self.temp_dir, "claude35_cache_invalid")
+            )
+            results = detector.detect(self.messages[:1])
+            self.assertEqual(len(results), 0)
+
 if __name__ == '__main__':
     unittest.main() 

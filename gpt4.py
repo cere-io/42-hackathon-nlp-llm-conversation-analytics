@@ -52,6 +52,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from conversation_detector import ConversationDetector, Message, Label
 from cache_manager import CacheManager
+from parallel_processor import ParallelProcessor, ProcessingResult
 
 # Load environment variables from .env file
 load_dotenv()
@@ -69,196 +70,179 @@ logger = logging.getLogger(__name__)
 
 class GPT4ConversationDetector(ConversationDetector):
     """
-    Conversation detector using OpenAI's GPT-4 model with caching.
+    Detects conversations using GPT-4 model with caching support.
     
     Attributes:
-        client (OpenAI): OpenAI API client
-        cache (CacheManager): Cache for API responses
-        model_name (str): Name of the GPT model to use
-        batch_size (int): Number of messages to process in each batch
+        client: OpenAI API client
+        cache: Cache manager for API responses
+        batch_size: Number of messages to process in batch
+        parallel_processor: Parallel processor for batch processing
         
     Edge Cases Handled:
         - API rate limits
         - Network errors
         - Invalid responses
-        - Cache misses
-        - Memory pressure
+        - Message validation
     """
     
-    def __init__(self, api_key: Optional[str] = None, batch_size: int = 50):
-        """
-        Initialize the GPT-4 conversation detector.
-        
+    def __init__(self, api_key: Optional[str] = None, batch_size: int = 100, cache_dir: Optional[str] = None):
+        """Initialize the GPT-4 conversation detector.
+
         Args:
-            api_key: OpenAI API key (optional, can be set via environment)
-            batch_size: Number of messages to process in each batch
-            
-        Raises:
-            ValueError: If API key is not provided and not in environment
+            api_key (str, optional): OpenAI API key. If not provided, will try to get from environment.
+            batch_size (int, optional): Number of messages to process in each batch. Defaults to 100.
+            cache_dir (str, optional): Directory to store cache files. If not provided, will use default.
         """
         super().__init__()
-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
-        if not self.client.api_key:
-            raise ValueError("OpenAI API key must be provided or set in environment")
-            
-        self.cache = CacheManager(cache_dir="cache/gpt4", max_size=1000)
-        self.model_name = "gpt-4-0125-preview"
+        
+        # Initialize API client
+        self.client = openai.OpenAI(api_key=api_key)
         self.batch_size = batch_size
         
-    def detect(self, messages: List[Message]) -> List[Label]:
-        """
-        Detect conversations in a list of messages using GPT-4.
+        # Initialize cache manager
+        self.cache_manager = CacheManager(cache_dir or "gpt4_cache")
         
+        # Initialize parallel processor
+        self.parallel_processor = ParallelProcessor(
+            max_workers=5,
+            batch_size=batch_size,
+            timeout=30
+        )
+        
+        # Set up logging
+        self.logger = logging.getLogger(__name__)
+        
+        logger.info("GPT-4 detector initialized with caching")
+        
+    def detect(self, messages: List[Message]) -> List[Label]:
+        """Detect conversations in messages using GPT-4.
+
         Args:
             messages: List of messages to analyze
+
+        Returns:
+            List of conversation labels
+        """
+        # Handle empty messages
+        if not messages:
+            return []
+            
+        # Validate messages
+        if not self._validate_messages(messages):
+            raise ValueError("Invalid messages provided")
+            
+        # Generate cache key
+        cache_key = self._generate_cache_key(messages)
+        
+        # Check cache first
+        cached_result = self.cache_manager.get(cache_key)
+        if cached_result is not None:
+            return [Label.from_dict(label_dict) for label_dict in cached_result]
+            
+        try:
+            # Process messages in parallel batches
+            results = self.parallel_processor.process_batch(
+                messages,
+                self._process_message_batch
+            )
+            
+            # Collect successful results
+            labels = []
+            for result in results:
+                if result.success and result.data:
+                    labels.extend(result.data)
+            
+            # Cache the results
+            if labels:
+                self.cache_manager.set(cache_key, [label.to_dict() for label in labels])
+            
+            return labels
+            
+        except Exception as e:
+            self.logger.error(f"Error detecting conversations: {e}")
+            return []
+        
+    def _process_message_batch(self, messages: List[Message]) -> List[Label]:
+        """Process a batch of messages using GPT-4 API."""
+        try:
+            # Format messages for API
+            formatted_messages = self._format_messages(messages)
+            
+            # Make API call with retries
+            max_retries = 3
+            retry_delay = 1  # seconds
+            
+            for attempt in range(max_retries):
+                try:
+                    response = self.client.chat.completions.create(
+                        model="gpt-4-turbo-preview",
+                        messages=[{
+                            "role": "user",
+                            "content": formatted_messages
+                        }]
+                    )
+                    break
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise
+                    self.logger.warning(f"API call failed, attempt {attempt + 1}: {e}")
+                    time.sleep(retry_delay)
+                    
+            # Parse response into labels
+            return self._parse_response(response)
+            
+        except Exception as e:
+            self.logger.error(f"Error processing batch: {e}")
+            raise
+        
+    def _format_messages(self, messages: List[Message]) -> str:
+        """Format messages for GPT-4 API."""
+        return "\n".join(
+            f"[{msg.timestamp}] {msg.user_id}: {msg.content}"
+            for msg in messages
+        )
+        
+    def _parse_response(self, response) -> List[Label]:
+        """
+        Parse GPT-4 response into labels.
+        
+        Args:
+            response: Raw API response
             
         Returns:
             List of conversation labels
             
         Edge Cases:
-            - Empty message list
-            - Invalid message format
-            - API errors
-            - Cache misses
+            - Invalid JSON
+            - Missing fields
+            - Malformed response
         """
-        if not messages:
-            logger.warning("Empty message list provided")
-            return []
-            
         try:
-            # Process messages in batches
+            # Parse response JSON
+            content = json.loads(response.choices[0].message.content)
+            
+            # Create labels from conversations
             labels = []
-            for i in range(0, len(messages), self.batch_size):
-                batch = messages[i:i + self.batch_size]
-                batch_labels = self._detect_conversations(batch)
-                labels.extend(batch_labels)
+            for conv in content.get("conversations", []):
+                label = Label(
+                    label_type=conv["topic"],
+                    confidence=conv.get("confidence", 0.0),
+                    metadata={"conversation_id": conv["id"]}
+                )
+                labels.append(label)
                 
             return labels
             
-        except Exception as e:
-            logger.error(f"Error in conversation detection: {e}")
+        except (json.JSONDecodeError, KeyError, AttributeError) as e:
+            self.logger.error(f"Error parsing response: {e}")
             return []
-            
-    def _detect_conversations(self, messages: List[Message]) -> List[Label]:
-        """
-        Detect conversations in a batch of messages.
-        
-        Args:
-            messages: Batch of messages to analyze
-            
-        Returns:
-            List of conversation labels for the batch
-        """
-        try:
-            # Create cache key from message content
-            cache_key = self._create_cache_key(messages)
-            
-            # Check cache first
-            cached_result = self.cache.get(cache_key)
-            if cached_result:
-                logger.debug(f"Cache hit for batch of {len(messages)} messages")
-                return self._parse_cached_result(cached_result)
-                
-            # Prepare messages for API
-            formatted_messages = self._format_messages(messages)
-            
-            # Call API with retries
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    response = self.client.chat.completions.create(
-                        model=self.model_name,
-                        messages=formatted_messages,
-                        temperature=0.7,
-                        max_tokens=1000
-                    )
-                    
-                    # Cache the response
-                    self.cache.set(cache_key, response.choices[0].message.content)
-                    
-                    # Parse and return results
-                    return self._parse_response(response.choices[0].message.content)
-                    
-                except Exception as e:
-                    if attempt == max_retries - 1:
-                        raise
-                    logger.warning(f"API call failed, attempt {attempt + 1}/{max_retries}: {e}")
-                    time.sleep(1)  # Wait before retry
-                    
-        except Exception as e:
-            logger.error(f"Error processing message batch: {e}")
-            return []
-            
-    def _create_cache_key(self, messages: List[Message]) -> str:
-        """
-        Create a cache key from message content.
-        
-        Args:
-            messages: List of messages
-            
-        Returns:
-            String cache key
-        """
-        content = "|".join(f"{m.timestamp}_{m.text}" for m in messages)
-        return f"gpt4_{hash(content)}"
-        
-    def _parse_cached_result(self, cached_content: str) -> List[Label]:
-        """
-        Parse cached API response.
-        
-        Args:
-            cached_content: Cached response content
-            
-        Returns:
-            List of conversation labels
-        """
-        try:
-            return self._parse_response(cached_content)
-        except Exception as e:
-            logger.error(f"Error parsing cached result: {e}")
-            return []
-            
-    def _format_messages(self, messages: List[Message]) -> List[Dict[str, str]]:
-        """
-        Format messages for API input.
-        
-        Args:
-            messages: List of messages to format
-            
-        Returns:
-            List of formatted messages
-        """
-        return [
-            {"role": "system", "content": "You are a conversation detection assistant."},
-            {"role": "user", "content": json.dumps([m.__dict__ for m in messages])}
-        ]
-        
-    def _parse_response(self, response: str) -> List[Label]:
-        """
-        Parse API response into labels.
-        
-        Args:
-            response: API response string
-            
-        Returns:
-            List of conversation labels
-        """
-        try:
-            # Parse JSON response
-            data = json.loads(response)
-            return [Label(**label) for label in data]
-        except Exception as e:
-            logger.error(f"Error parsing API response: {e}")
-            return []
-            
-    def get_cache_stats(self) -> Dict[str, Any]:
-        """
-        Get cache statistics.
-        
-        Returns:
-            Dictionary containing cache statistics
-        """
-        return self.cache.get_stats()
+
+    def _generate_cache_key(self, messages: List[Message]) -> str:
+        """Generate a cache key for a list of messages."""
+        return "_".join(
+            f"{msg.message_id}"
+            for msg in messages
+        )
 
 if __name__ == '__main__':
     try:

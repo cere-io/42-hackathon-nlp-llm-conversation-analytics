@@ -131,9 +131,17 @@ class CacheManager:
             - Cache size limit reached
             - Disk space issues
             - Invalid value types
+            - Non-serializable objects
         """
         with self.lock:
             try:
+                # Test if value is JSON serializable
+                try:
+                    json.dumps(value)
+                except (TypeError, ValueError):
+                    logger.warning(f"Value for key {key} is not JSON serializable, skipping cache")
+                    return
+                    
                 # Remove if exists (will be added at end)
                 if key in self.cache:
                     self.cache.pop(key)
@@ -150,7 +158,7 @@ class CacheManager:
                 try:
                     with open(cache_file, 'w') as f:
                         json.dump(value, f)
-                except (TypeError, OSError) as e:
+                except OSError as e:
                     logger.warning(f"Failed to persist cache entry {key}: {e}")
                     
             except Exception as e:
