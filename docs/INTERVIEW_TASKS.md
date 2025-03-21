@@ -91,12 +91,20 @@ This section evaluates your software engineering practices and ability to create
   - Basic documentation
   - Helpful comments for complex logic
 - Basic dependency handling
+- Comprehensive test suite organized by functionality:
+  - Models: Base, clustering, and optimization model tests
+  - Detectors: Spam and conversation detection tests
+  - Processors: Text vectorization and parallel processing tests
+  - Metrics: Clustering and conversation evaluation tests
+  - CLI: Command-line interface tests
 
 ---
 > **💭 Questions to Consider**
 > - How would you ensure your script runs consistently across different machines?
 > - What steps would you take to make the codebase maintainable?
 > - How would you handle version conflicts between dependencies?
+> - How would you organize tests to maximize coverage and maintainability?
+> - What testing strategies would you employ for different components?
 </details>
 
 <details>

@@ -13,6 +13,11 @@ zyra-audition/
 │   ├── models/           # LLM model integrations
 │   └── utils/            # Shared utilities
 ├── tests/                 # Test suite
+│   ├── models/          # Model tests (base, clustering, optimization)
+│   ├── detectors/       # Detector tests (spam, conversation)
+│   ├── processors/      # Processor tests (text, parallel)
+│   ├── metrics/         # Metrics tests (clustering, conversation)
+│   └── cli/            # CLI interface tests
 ├── evaluation/           # Evaluation scripts and tools
 ├── optimization/         # Performance optimization tools
 ├── docs/                 # Documentation
@@ -46,8 +51,12 @@ python config/download_nltk_data.py
 # Run all tests
 python -m pytest tests/
 
-# Run specific test file
-python -m pytest tests/test_spam_detector.py
+# Run specific test category
+python -m pytest tests/models/     # Run all model tests
+python -m pytest tests/detectors/  # Run all detector tests
+python -m pytest tests/processors/ # Run all processor tests
+python -m pytest tests/metrics/    # Run all metric tests
+python -m pytest tests/cli/        # Run all CLI tests
 
 # Run with coverage report
 python -m pytest --cov=src tests/
