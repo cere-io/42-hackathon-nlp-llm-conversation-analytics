@@ -1,0 +1,163 @@
+<html><body><h1>Model Evaluation Report</h1><p>Generated on: 2025-03-21 15:32:20.486011</p><h2>Model Comparison</h2><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>accuracy</th>
+      <th>macro_f1</th>
+      <th>weighted_f1</th>
+      <th>auc_roc</th>
+      <th>processing_time</th>
+      <th>memory_usage</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>random_forest</th>
+      <td>0.97</td>
+      <td>0.956989</td>
+      <td>0.969527</td>
+      <td>0.997636</td>
+      <td>0.158303</td>
+      <td>0.453125</td>
+    </tr>
+    <tr>
+      <th>logistic_regression</th>
+      <td>0.95</td>
+      <td>0.925937</td>
+      <td>0.948311</td>
+      <td>0.993325</td>
+      <td>0.013862</td>
+      <td>0.539062</td>
+    </tr>
+  </tbody>
+</table><h2>Model: random_forest</h2><h3>Confusion Matrix</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>0</th>
+      <th>1</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>152</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>5</td>
+      <td>42</td>
+    </tr>
+  </tbody>
+</table><h3>Classification Report</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>0</th>
+      <th>1</th>
+      <th>accuracy</th>
+      <th>macro avg</th>
+      <th>weighted avg</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>precision</th>
+      <td>0.968153</td>
+      <td>0.976744</td>
+      <td>0.97</td>
+      <td>0.972449</td>
+      <td>0.970172</td>
+    </tr>
+    <tr>
+      <th>recall</th>
+      <td>0.993464</td>
+      <td>0.893617</td>
+      <td>0.97</td>
+      <td>0.943541</td>
+      <td>0.970000</td>
+    </tr>
+    <tr>
+      <th>f1-score</th>
+      <td>0.980645</td>
+      <td>0.933333</td>
+      <td>0.97</td>
+      <td>0.956989</td>
+      <td>0.969527</td>
+    </tr>
+    <tr>
+      <th>support</th>
+      <td>153.000000</td>
+      <td>47.000000</td>
+      <td>0.97</td>
+      <td>200.000000</td>
+      <td>200.000000</td>
+    </tr>
+  </tbody>
+</table><h2>Model: logistic_regression</h2><h3>Confusion Matrix</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>0</th>
+      <th>1</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>152</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>9</td>
+      <td>38</td>
+    </tr>
+  </tbody>
+</table><h3>Classification Report</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>0</th>
+      <th>1</th>
+      <th>accuracy</th>
+      <th>macro avg</th>
+      <th>weighted avg</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>precision</th>
+      <td>0.944099</td>
+      <td>0.974359</td>
+      <td>0.95</td>
+      <td>0.959229</td>
+      <td>0.951210</td>
+    </tr>
+    <tr>
+      <th>recall</th>
+      <td>0.993464</td>
+      <td>0.808511</td>
+      <td>0.95</td>
+      <td>0.900987</td>
+      <td>0.950000</td>
+    </tr>
+    <tr>
+      <th>f1-score</th>
+      <td>0.968153</td>
+      <td>0.883721</td>
+      <td>0.95</td>
+      <td>0.925937</td>
+      <td>0.948311</td>
+    </tr>
+    <tr>
+      <th>support</th>
+      <td>153.000000</td>
+      <td>47.000000</td>
+      <td>0.95</td>
+      <td>200.000000</td>
+      <td>200.000000</td>
+    </tr>
+  </tbody>
+</table><h3>accuracy Comparison</h3><img src="comparison_accuracy_20250321_1532.png"><h3>auc_roc Comparison</h3><img src="comparison_auc_roc_20250321_1532.png"><h3>processing_time Comparison</h3><img src="comparison_processing_time_20250321_1532.png"><h3>memory_usage Comparison</h3><img src="comparison_memory_usage_20250321_1532.png"></body></html>

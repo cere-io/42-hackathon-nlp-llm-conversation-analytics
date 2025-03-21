@@ -1,0 +1,17 @@
+{
+  "adjusted_rand": 0.5833638248566898,
+  "adjusted_mutual_info": 0.6302616539038329,
+  "normalized_mutual_info": 0.7634049242463726,
+  "homogeneity": 0.7067714893593494,
+  "completeness": 0.8299050202987875,
+  "v_measure": 0.7634049242463727,
+  "coverage": 0.7313432835820896,
+  "mean_confidence": 0.9118367346938775,
+  "min_confidence": 0.6,
+  "max_confidence": 1.0,
+  "n_conversations_true": 14,
+  "n_conversations_pred": 9,
+  "n_messages": 49,
+  "avg_messages_per_conv_true": 3.5,
+  "avg_messages_per_conv_pred": 5.444444444444445
+}

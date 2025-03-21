@@ -1,3 +1,40 @@
+#!/usr/bin/env python3
+"""Script to evaluate topic labeling quality using Claude's evaluation capabilities.
+
+This script provides functionality to evaluate the quality of topic labels assigned to conversations
+by different models. It uses Claude to assess topics based on multiple criteria including information
+density, redundancy, relevance, and efficiency.
+
+Key Features:
+- Loads and validates message data and topic labels
+- Evaluates topics using Claude's advanced understanding
+- Calculates comprehensive quality metrics
+- Generates detailed evaluation reports
+- Handles various edge cases and data validation
+
+Edge Cases Handled:
+- Missing or invalid files
+- Empty conversations
+- Invalid topic labels
+- API errors and timeouts
+- Malformed JSON responses
+- Missing environment variables
+- Invalid file paths
+- Empty or malformed data
+
+Example Usage:
+    python evaluate_topics.py /path/to/group/directory
+
+Requirements:
+1. ANTHROPIC_API_KEY environment variable set
+2. Directory containing:
+   - messages_{group_name}.csv
+   - labels_*_{group_name}.csv files
+3. Input files must contain required columns:
+   - messages: 'id', 'text', 'timestamp', 'username', 'first_name'
+   - labels: 'message_id', 'conversation_id', 'topic'
+"""
+
 import os
 import pandas as pd
 import json
@@ -6,38 +43,210 @@ from typing import Dict, List, Set, Tuple
 import glob
 from collections import defaultdict
 from datetime import datetime
+import logging
+import sys
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('topic_evaluation.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def extract_group_name(path: str) -> str:
-    """Extract group name from a path."""
-    return os.path.basename(path.rstrip('/'))
+    """Extract group name from a path.
+    
+    Args:
+        path: Directory path containing group data
+        
+    Returns:
+        String containing the extracted group name
+        
+    Edge Cases Handled:
+        - Empty paths
+        - Paths with trailing slashes
+        - Invalid path formats
+        - Root directory paths
+    """
+    try:
+        if not path:
+            raise ValueError("Empty path provided")
+            
+        # Remove trailing slashes and get basename
+        group_name = os.path.basename(path.rstrip('/'))
+        
+        if not group_name:
+            raise ValueError("Invalid path: could not extract group name")
+            
+        return group_name
+    except Exception as e:
+        logger.error(f"Error extracting group name from path '{path}': {e}")
+        raise
 
 def load_messages(group_dir: str) -> pd.DataFrame:
-    """Load raw messages for a group."""
-    group_name = extract_group_name(group_dir)
-    messages_path = os.path.join(group_dir, f"messages_{group_name}.csv")
-    return pd.read_csv(messages_path)
+    """Load and validate raw messages for a group.
+    
+    Args:
+        group_dir: Path to directory containing message data
+        
+    Returns:
+        DataFrame containing validated message data
+        
+    Raises:
+        FileNotFoundError: If messages file doesn't exist
+        ValueError: If required columns are missing
+        pd.errors.EmptyDataError: If file is empty
+        pd.errors.ParserError: If file is not a valid CSV
+        
+    Edge Cases Handled:
+        - Missing message file
+        - Empty files
+        - Missing required columns
+        - Invalid data types
+        - Malformed CSV
+        - Missing user information
+    """
+    try:
+        group_name = extract_group_name(group_dir)
+        messages_path = os.path.join(group_dir, f"messages_{group_name}.csv")
+        
+        if not os.path.exists(messages_path):
+            raise FileNotFoundError(f"Messages file not found: {messages_path}")
+            
+        logger.info(f"Loading messages from: {messages_path}")
+        messages_df = pd.read_csv(messages_path)
+        
+        # Validate file is not empty
+        if messages_df.empty:
+            raise ValueError("Messages file is empty")
+            
+        # Check required columns
+        required_columns = {'id', 'text', 'timestamp', 'username', 'first_name'}
+        missing_columns = required_columns - set(messages_df.columns)
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {missing_columns}")
+            
+        # Validate data types
+        if not pd.api.types.is_numeric_dtype(messages_df['id']):
+            raise ValueError("Message IDs must be numeric")
+            
+        # Check for duplicate IDs
+        if messages_df['id'].duplicated().any():
+            logger.warning("Duplicate message IDs found")
+            
+        # Handle missing user information
+        messages_df['username'] = messages_df['username'].fillna('')
+        messages_df['first_name'] = messages_df['first_name'].fillna('')
+        
+        logger.info(f"Successfully loaded {len(messages_df)} messages")
+        return messages_df
+        
+    except pd.errors.EmptyDataError:
+        logger.error("Messages file is empty")
+        raise
+    except pd.errors.ParserError as e:
+        logger.error(f"Error parsing messages file: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error loading messages: {e}")
+        raise
 
 def load_labels(group_dir: str) -> Dict[str, pd.DataFrame]:
-    """Load all label files for a group, returns dict mapping model name to labels DataFrame."""
-    group_name = extract_group_name(group_dir)
-    label_files = glob.glob(os.path.join(group_dir, f"labels_*_{group_name}.csv"))
-    labels_by_model = {}
+    """Load and validate all label files for a group.
     
-    for file in label_files:
-        # Extract model name from filename
-        # Format: labels_YYYYMMDD_MODEL_group.csv
-        filename = os.path.basename(file)
-        parts = filename.split('_')
-        if len(parts) >= 3:
-            model = parts[2]  # Get the actual model name (e.g., gpt4o, claude35s, deepseekv3)
-            try:
-                df = pd.read_csv(file)
-                labels_by_model[model] = df
-            except Exception as e:
-                print(f"Error loading {file}: {e}")
-                continue
+    Args:
+        group_dir: Path to directory containing label files
+        
+    Returns:
+        Dictionary mapping model names to their label DataFrames
+        
+    Raises:
+        ValueError: If no valid label files found
+        FileNotFoundError: If directory doesn't exist
+        
+    Edge Cases Handled:
+        - No label files found
+        - Invalid file formats
+        - Missing required columns
+        - Duplicate model names
+        - Corrupted files
+        - Invalid data types
+    """
+    try:
+        group_name = extract_group_name(group_dir)
+        label_files = glob.glob(os.path.join(group_dir, f"labels_*_{group_name}.csv"))
+        
+        if not label_files:
+            raise ValueError(f"No label files found in {group_dir}")
             
-    return labels_by_model
+        labels_by_model = {}
+        seen_models = set()
+        
+        for file in label_files:
+            try:
+                # Extract model name from filename
+                filename = os.path.basename(file)
+                parts = filename.split('_')
+                
+                if len(parts) < 3:
+                    logger.warning(f"Invalid label file name format: {filename}")
+                    continue
+                    
+                model = parts[2].lower()  # Normalize model name
+                
+                # Check for duplicate model names
+                if model in seen_models:
+                    logger.warning(f"Duplicate model name found: {model}")
+                    continue
+                    
+                seen_models.add(model)
+                
+                # Load and validate label file
+                df = pd.read_csv(file)
+                
+                if df.empty:
+                    logger.warning(f"Empty label file: {file}")
+                    continue
+                    
+                # Check required columns
+                required_columns = {'message_id', 'conversation_id', 'topic'}
+                missing_columns = required_columns - set(df.columns)
+                if missing_columns:
+                    logger.warning(f"Missing required columns in {file}: {missing_columns}")
+                    continue
+                    
+                # Validate data types
+                if not pd.api.types.is_numeric_dtype(df['message_id']):
+                    logger.warning(f"Invalid message_id type in {file}")
+                    continue
+                    
+                if not pd.api.types.is_numeric_dtype(df['conversation_id']):
+                    logger.warning(f"Invalid conversation_id type in {file}")
+                    continue
+                    
+                # Check for duplicate message IDs
+                if df['message_id'].duplicated().any():
+                    logger.warning(f"Duplicate message IDs found in {file}")
+                    
+                labels_by_model[model] = df
+                logger.info(f"Successfully loaded labels for model: {model}")
+                
+            except Exception as e:
+                logger.error(f"Error loading label file {file}: {e}")
+                continue
+                
+        if not labels_by_model:
+            raise ValueError("No valid label files could be loaded")
+            
+        return labels_by_model
+        
+    except Exception as e:
+        logger.error(f"Error loading labels: {e}")
+        raise
 
 def get_unique_topics(labels_df: pd.DataFrame) -> Set[str]:
     """Extract unique topics from a labels DataFrame."""
