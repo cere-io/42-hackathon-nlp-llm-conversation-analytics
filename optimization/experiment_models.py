@@ -19,11 +19,22 @@ from itertools import product
 
 def load_config(config_path="open_source_examples/model_config.yaml"):
     """Load the configuration from YAML file."""
-    with open(config_path, 'r') as file:
-        return yaml.safe_load(file)
+    try:
+        with open(config_path, 'r', encoding='utf-8') as file:
+            return yaml.safe_load(file)
+    except Exception as e:
+        print(f"Error loading config file: {e}")
+        return None
 
-def update_config(config, updates, output_path="open_source_examples/temp_config.yaml"):
+def update_config(config, updates, output_path=None):
     """Update configuration with new parameters and save to a temporary file."""
+    if output_path is None:
+        # Use absolute path for temp config
+        output_path = os.path.abspath("temp_config.yaml")
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
     # Deep copy the config to avoid modifying the original
     updated_config = config.copy()
     
@@ -34,32 +45,44 @@ def update_config(config, updates, output_path="open_source_examples/temp_config
                 updated_config[section][key] = value
     
     # Write updated config to file
-    with open(output_path, 'w') as file:
-        yaml.dump(updated_config, file, default_flow_style=False)
-    
-    return output_path
+    try:
+        with open(output_path, 'w', encoding='utf-8') as file:
+            yaml.dump(updated_config, file, default_flow_style=False, allow_unicode=True)
+        return output_path
+    except Exception as e:
+        print(f"Error writing config file: {e}")
+        return None
 
 def run_experiment(input_file, config_path, output_dir=None):
     """Run the model playground with the given configuration."""
+    # Use absolute path for config
+    config_path = os.path.abspath(config_path)
     cmd = ["python", "open_source_examples/model_playground.py", input_file, "--config", config_path]
     
     if output_dir:
         cmd.extend(["--output_dir", output_dir])
     
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    
-    if result.returncode != 0:
-        print(f"Error running experiment: {result.stderr}")
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        print("STDOUT:", result.stdout)
+        if result.stderr:
+            print("STDERR:", result.stderr)
+        
+        if result.returncode != 0:
+            print(f"Error running experiment (return code {result.returncode})")
+            return None
+        
+        # Extract the output file path from the output
+        for line in result.stdout.split('\n'):
+            if "Results written to:" in line:
+                output_file = line.split("Results written to:")[1].strip()
+                return output_file
+        
         return None
-    
-    # Extract the output file path from the output
-    for line in result.stdout.split('\n'):
-        if "Results written to:" in line:
-            output_file = line.split("Results written to:")[1].strip()
-            return output_file
-    
-    return None
+    except Exception as e:
+        print(f"Exception running experiment: {e}")
+        return None
 
 def compute_metrics(group_dir):
     """Run the conversation metrics script on the results."""
@@ -122,23 +145,23 @@ def main():
     
     # Load base configuration
     base_config = load_config(args.config)
+    if base_config is None:
+        print("Failed to load base configuration")
+        return
     
-    # Define parameter space to explore
+    # Define parameter space to explore (reduced for testing)
     parameter_space = {
         "model": {
-            "temperature": [0.1, 0.2, 0.3],
-            "top_p": [0.85, 0.9, 0.95]
+            "temperature": [0.1],
+            "top_p": [0.85]
         },
         "processing": {
-            "batch_size": [4, 6, 8],
-            "max_context_messages": [8, 10, 12]
+            "batch_size": [4],
+            "max_context_messages": [8]
         },
         "prompt": {
             "path": [
-                "open_source_examples/prompts/conversation_detection_prompt.txt",
-                "open_source_examples/prompts/CD_prompt_mejorado.txt",
-                "open_source_examples/prompts/CD_prompt_alejandro_1.txt",
-                "open_source_examples/prompts/CD_prompt_alejandro_2.txt"
+                "open_source_examples/prompts/conversation_detection_prompt.txt"
             ]
         }
     }
@@ -157,6 +180,9 @@ def main():
         
         # Update configuration
         temp_config_path = update_config(base_config, config_update)
+        if temp_config_path is None:
+            print("Failed to update configuration")
+            continue
         
         # Run experiment
         output_file = run_experiment(args.input_file, temp_config_path)
@@ -184,21 +210,22 @@ def main():
             print(f"ARI Score: {latest_result.get('ari', 'N/A')}")
     
     # Save all results to CSV
-    results_df = pd.DataFrame(results)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_path = os.path.join(args.output, f"experiment_results_{timestamp}.csv")
-    results_df.to_csv(results_path, index=False)
-    
-    # Show best result
     if results:
+        results_df = pd.DataFrame(results)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        results_path = os.path.join(args.output, f"experiment_results_{timestamp}.csv")
+        results_df.to_csv(results_path, index=False)
+        
+        # Show best result
         best_result = max(results, key=lambda x: x.get('ari', 0))
         print("\n===== BEST CONFIGURATION =====")
         print(f"Experiment ID: {best_result['experiment_id']}")
         print(f"ARI Score: {best_result.get('ari', 'N/A')}")
         print(f"Configuration: {json.dumps(best_result['config'], indent=2)}")
         print(f"Model File: {best_result.get('label_file', 'N/A')}")
-    
-    print(f"\nAll results saved to: {results_path}")
+        print(f"\nAll results saved to: {results_path}")
+    else:
+        print("\nNo successful experiments to report")
 
 if __name__ == "__main__":
     main() 

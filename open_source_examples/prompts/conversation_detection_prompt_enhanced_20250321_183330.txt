@@ -1,0 +1,57 @@
+CONVERSATION_DETECTION_PROMPT = """Your task is to analyze the following message data and identify distinct conversations and their topics. For each conversation topic, please be specific and demonstrate understanding of what participants are actually discussing rather than using general/vague descriptions.
+
+Below you will find a series of messages with their IDs, timestamps, usernames, and content:
+
+
+ENHANCED GUIDANCE:
+CONTEXTUAL UNDERSTANDING: Consider the entire context of each message, not just keywords.
+TEMPORAL CONSISTENCY: Messages within the same time period (30 minutes) with semantic similarity likely belong to the same conversation.
+SEMANTIC PRECISION: Focus on the detailed technical meaning of messages, not just surface-level similarities.
+AVOID COMMON ERRORS: When assigning conversation IDs, ensure you're grouping by actual topic, not just by user or timestamp.
+
+[MESSAGES]
+
+Analyze these messages and return your analysis in CSV format with the following columns:
+message_id,conversation_id,topic,timestamp,confidence
+
+Analysis Rules:
+1. Message IDs:
+   - Use EXACTLY the numeric message_id from each input message (e.g., 36569, 36570). DO NOT invent new IDs or use strings like "CONVERSATION_1".
+   - Every message_id in the output MUST match an input message_id.
+
+2. Spam Detection:
+   - Assign conversation_id = 0 and topic = "Spam Messages" for:
+     * Promotional content (e.g., "FREE BITCOIN!")
+     * Repetitive messages
+     * Suspicious links (e.g., "click here")
+     * Unrealistic promises (e.g., "1000% gains guaranteed")
+     * Excessive punctuation/emojis (e.g., "!!!", "🎉🎉🎉")
+
+3. Conversation Grouping:
+   - Assign conversation_id as integers starting from 1 (1, 2, 3, etc.) for non-spam messages.
+   - Group by semantic content AND temporal proximity:
+     * Messages within 1 hour are more likely to belong to the same conversation.
+     * Look for topic continuity and user interaction patterns (e.g., same users replying).
+   - Each message gets exactly one conversation_id.
+
+4. Topic Labeling:
+   - Be specific and descriptive (e.g., "BTC Price Analysis Q1 2025" instead of "Crypto Discussion").
+   - Include key technical terms when present (e.g., "Empire X Airdrop", "NotSoin Partnership").
+   - Capture the main focus of the conversation.
+   - Avoid vague or generic labels.
+
+5. Technical Requirements:
+   - Preserve the EXACT timestamp from each input message (e.g., "2025-01-14T01:22:56Z").
+   - Confidence (0.0-1.0) should reflect:
+     * Clarity of topic relationship (higher if messages clearly relate).
+     * Temporal proximity (higher if within 1 hour).
+     * User interaction patterns (higher if same users are involved).
+     * Message content relevance (higher if content aligns strongly).
+   - Output ONLY CSV data starting with the header row: message_id,conversation_id,topic,timestamp,confidence
+   - NO quotes around fields, NO additional text, NO explanations—just raw CSV lines.
+
+Return only the CSV data starting with the header row. Example output:
+message_id,conversation_id,topic,timestamp,confidence
+36569,0,Spam Messages,2025-01-14T01:22:56Z,0.95
+36570,1,Token Supply Discussion,2025-01-14T01:25:40Z,0.90
+"""

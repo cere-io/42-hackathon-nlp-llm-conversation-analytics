@@ -1,0 +1,25 @@
+automation:
+  enabled: false
+  parallel: false
+gpu:
+  auto_select: true
+  enabled: true
+  fallback_to_cpu: true
+model:
+  max_tokens: 1000
+  names:
+  - phi:latest
+  - llama2:latest
+  temperature: 0.1
+  top_p: 0.85
+output:
+  format: csv
+  include_confidence: true
+  output_dir: data/groups
+  timestamp_format: '%Y%m%d_%H%M%S'
+processing:
+  batch_size: 8
+  max_context_messages: 8
+  min_confidence_threshold: 0.7
+prompt:
+  path: open_source_examples/prompts/CD_prompt_alejandro_1.txt

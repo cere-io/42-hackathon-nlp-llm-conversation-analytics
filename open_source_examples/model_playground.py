@@ -105,7 +105,16 @@ class ModelLabeler:
             
             for pf in prompt_files:
                 try:
-                    with open(pf, 'r') as f:
+                    with open(pf, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        prompt_content = extract_prompt_content(content)
+                        if prompt_content:
+                            prompts[os.path.basename(pf)] = prompt_content
+                        else:
+                            logger.warning(f"No prompt content found in file: {pf}")
+                except UnicodeDecodeError:
+                    # Fallback to latin-1 if UTF-8 fails
+                    with open(pf, 'r', encoding='latin-1') as f:
                         content = f.read()
                         prompt_content = extract_prompt_content(content)
                         if prompt_content:
@@ -116,7 +125,16 @@ class ModelLabeler:
                     logger.warning(f"Failed to load prompt file {pf}: {e}")
         else:
             try:
-                with open(prompt_path, 'r') as f:
+                with open(prompt_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    prompt_content = extract_prompt_content(content)
+                    if prompt_content:
+                        prompts[os.path.basename(prompt_path)] = prompt_content
+                    else:
+                        raise ValueError(f"No prompt content found in file: {prompt_path}")
+            except UnicodeDecodeError:
+                # Fallback to latin-1 if UTF-8 fails
+                with open(prompt_path, 'r', encoding='latin-1') as f:
                     content = f.read()
                     prompt_content = extract_prompt_content(content)
                     if prompt_content:

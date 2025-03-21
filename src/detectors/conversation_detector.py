@@ -12,9 +12,10 @@ Classes:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 import json
+from ..utils.cache_manager import CacheManager
 
 @dataclass
 class Message:
@@ -91,16 +92,19 @@ class ConversationDetector:
     
     Attributes:
         batch_size: Number of messages to process in each batch
+        cache_manager: Cache manager instance for storing results
     """
     
-    def __init__(self, batch_size: int = 10):
+    def __init__(self, batch_size: int = 10, cache_dir: str = "cache"):
         """
         Initialize the conversation detector.
         
         Args:
             batch_size: Number of messages to process in each batch
+            cache_dir: Directory for cache storage
         """
         self.batch_size = batch_size
+        self.cache_manager = CacheManager(cache_dir=cache_dir)
         
     def detect(self, messages: List[Message]) -> List[Label]:
         """
@@ -139,4 +143,65 @@ class ConversationDetector:
         except Exception:
             return False
             
-        return True 
+        return True
+
+    def _get_cache_key(self, messages: List[Message]) -> str:
+        """
+        Generate a cache key for a list of messages.
+        
+        Args:
+            messages: List of messages to generate key for
+            
+        Returns:
+            Cache key string
+        """
+        # Create a unique key based on message IDs and content
+        message_data = [(msg.message_id, msg.content) for msg in messages]
+        return f"conv_detect_{hash(str(message_data))}"
+
+    def _get_cached_result(self, messages: List[Message]) -> Optional[List[Label]]:
+        """
+        Get cached detection results for messages.
+        
+        Args:
+            messages: List of messages to check cache for
+            
+        Returns:
+            Cached labels if found, None otherwise
+        """
+        cache_key = self._get_cache_key(messages)
+        cached_data = self.cache_manager.get(cache_key)
+        
+        if cached_data:
+            try:
+                return [Label.from_dict(label_data) for label_data in cached_data]
+            except Exception:
+                return None
+        return None
+
+    def _cache_result(self, messages: List[Message], labels: List[Label]) -> None:
+        """
+        Cache detection results for messages.
+        
+        Args:
+            messages: List of messages
+            labels: List of labels to cache
+        """
+        cache_key = self._get_cache_key(messages)
+        label_data = [label.to_dict() for label in labels]
+        self.cache_manager.set(cache_key, label_data)
+
+    def clear_cache(self) -> None:
+        """
+        Clear the detector's cache.
+        """
+        self.cache_manager.clear()
+
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """
+        Get cache statistics.
+        
+        Returns:
+            Dictionary containing cache statistics
+        """
+        return self.cache_manager.get_stats() 

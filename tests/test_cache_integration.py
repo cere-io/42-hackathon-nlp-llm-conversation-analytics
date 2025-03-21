@@ -1,0 +1,137 @@
+"""
+Test module for ConversationDetector caching functionality.
+"""
+
+import unittest
+import os
+import shutil
+from datetime import datetime
+from src.detectors.test_detector import TestDetector
+from src.detectors.conversation_detector import Message, Label
+
+class TestCacheIntegration(unittest.TestCase):
+    """Test cases for ConversationDetector caching functionality."""
+    
+    def setUp(self):
+        """Set up test environment."""
+        self.test_cache_dir = "test_cache"
+        self.detector = TestDetector(cache_dir=self.test_cache_dir)
+        
+    def tearDown(self):
+        """Clean up test environment."""
+        if os.path.exists(self.test_cache_dir):
+            shutil.rmtree(self.test_cache_dir)
+            
+    def test_cache_initialization(self):
+        """Test that cache is properly initialized."""
+        self.assertTrue(os.path.exists(self.test_cache_dir))
+        stats = self.detector.get_cache_stats()
+        self.assertEqual(stats["size"], 0)
+        self.assertEqual(stats["max_size"], 1000)  # default max_size
+        
+    def test_cache_storage_and_retrieval(self):
+        """Test storing and retrieving results from cache."""
+        # Create test messages
+        messages = [
+            Message(
+                content="This is a test message",
+                timestamp=datetime.now(),
+                user_id="user1",
+                message_id="msg1"
+            ),
+            Message(
+                content="This is a normal message",
+                timestamp=datetime.now(),
+                user_id="user2",
+                message_id="msg2"
+            )
+        ]
+        
+        # First detection (should not use cache)
+        labels1 = self.detector.detect(messages)
+        self.assertEqual(len(labels1), 2)
+        self.assertEqual(labels1[0].label_type, "test")
+        self.assertEqual(labels1[1].label_type, "normal")
+        
+        # Second detection (should use cache)
+        labels2 = self.detector.detect(messages)
+        self.assertEqual(len(labels2), 2)
+        self.assertEqual(labels2[0].label_type, "test")
+        self.assertEqual(labels2[1].label_type, "normal")
+        
+        # Verify cache stats
+        stats = self.detector.get_cache_stats()
+        self.assertEqual(stats["size"], 1)
+        
+    def test_cache_clear(self):
+        """Test clearing the cache."""
+        # Create and cache some results
+        messages = [
+            Message(
+                content="Test message",
+                timestamp=datetime.now(),
+                user_id="user1",
+                message_id="msg1"
+            )
+        ]
+        self.detector.detect(messages)
+        
+        # Clear cache
+        self.detector.clear_cache()
+        
+        # Verify cache is empty
+        stats = self.detector.get_cache_stats()
+        self.assertEqual(stats["size"], 0)
+        
+    def test_cache_invalidation(self):
+        """Test that cache is invalidated when messages change."""
+        # Create initial messages
+        messages1 = [
+            Message(
+                content="Test message 1",
+                timestamp=datetime.now(),
+                user_id="user1",
+                message_id="msg1"
+            )
+        ]
+        labels1 = self.detector.detect(messages1)
+        
+        # Create modified messages
+        messages2 = [
+            Message(
+                content="Test message 2",  # Different content
+                timestamp=datetime.now(),
+                user_id="user1",
+                message_id="msg1"
+            )
+        ]
+        labels2 = self.detector.detect(messages2)
+        
+        # Verify different results
+        self.assertNotEqual(labels1[0].metadata["processed_at"], 
+                          labels2[0].metadata["processed_at"])
+        
+    def test_cache_size_limit(self):
+        """Test that cache respects size limit."""
+        # Create detector with small cache size
+        small_detector = TestDetector(cache_dir=self.test_cache_dir)
+        small_detector.cache_manager.max_size = 2
+        
+        # Create and cache multiple results
+        for i in range(3):
+            messages = [
+                Message(
+                    content=f"Test message {i}",
+                    timestamp=datetime.now(),
+                    user_id=f"user{i}",
+                    message_id=f"msg{i}"
+                )
+            ]
+            small_detector.detect(messages)
+            
+        # Verify cache size
+        stats = small_detector.get_cache_stats()
+        self.assertEqual(stats["size"], 2)  # Should only keep last 2 results
+        
+if __name__ == '__main__':
+    unittest.main() 

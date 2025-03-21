@@ -28,15 +28,21 @@ The script expects:
 2. Input files must contain columns: 'message_id' and 'conversation_id'
 """
 
+import os
 import pandas as pd
-from pathlib import Path
+import numpy as np
 from sklearn.metrics import adjusted_rand_score
 import argparse
 import logging
 import glob
 from datetime import datetime
-import os
 import sys
+from typing import Dict, List, Tuple, Optional
+from pathlib import Path
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -323,70 +329,207 @@ def evaluate_conversation_clustering(group_dir: str) -> None:
         logger.error(f"Error saving results to {output_file}: {e}")
         raise
 
-def main():
-    """Main entry point for the conversation metrics evaluation script.
-    
-    This function:
-    1. Sets up logging configuration
-    2. Parses command line arguments
-    3. Executes the evaluation process
-    4. Handles any errors that occur during execution
-    
-    Edge Cases Handled:
-        - Invalid command line arguments
-        - Permission errors
-        - System errors
-        - Keyboard interrupts
+def evaluate_groupings(ground_truth_df: pd.DataFrame, prediction_df: pd.DataFrame) -> Dict[str, float]:
     """
-    # Configure logging with more detailed format
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('conversation_metrics.log')
-        ]
+    Evaluate grouping quality using multiple metrics.
+    
+    Args:
+        ground_truth_df: DataFrame with ground truth labels
+        prediction_df: DataFrame with predicted labels
+        
+    Returns:
+        Dictionary containing various evaluation metrics
+    """
+    # Rename columns to match
+    gt_df = ground_truth_df.copy()
+    pred_df = prediction_df.copy()
+    
+    # Rename ground truth columns
+    gt_df = gt_df.rename(columns={
+        'id': 'message_id',
+        'conv_id': 'conversation_id'
+    })
+    
+    # Ensure we have the required columns
+    required_cols = ['message_id', 'conversation_id']
+    for df, name in [(gt_df, 'ground truth'), (pred_df, 'predictions')]:
+        missing = [col for col in required_cols if col not in df.columns]
+        if missing:
+            raise ValueError(f"Missing required columns in {name}: {missing}")
+    
+    # Merge datasets
+    merged_df = pd.merge(gt_df, pred_df, on='message_id', how='inner')
+    
+    metrics = {}
+    
+    # Calculate ARI
+    metrics['ari'] = adjusted_rand_score(
+        merged_df['conversation_id_x'],
+        merged_df['conversation_id_y']
     )
-    logger = logging.getLogger(__name__)
+    
+    # Calculate group statistics
+    metrics['n_ground_truth_groups'] = merged_df['conversation_id_x'].nunique()
+    metrics['n_predicted_groups'] = merged_df['conversation_id_y'].nunique()
+    metrics['avg_group_size_gt'] = len(merged_df) / metrics['n_ground_truth_groups']
+    metrics['avg_group_size_pred'] = len(merged_df) / metrics['n_predicted_groups']
+    
+    # Get timestamp
+    if 'timestamp' in prediction_df.columns:
+        metrics['timestamp'] = prediction_df['timestamp'].iloc[0]
+    else:
+        # Extract timestamp from filename
+        timestamp_str = prediction_df.name.split('_')[1]
+        metrics['timestamp'] = pd.to_datetime(timestamp_str, format='%Y%m%d')
+    
+    return metrics
+
+def visualize_results(metrics_df: pd.DataFrame, output_dir: str) -> None:
+    """
+    Generate visualizations of grouping results.
+    
+    Args:
+        metrics_df: DataFrame containing evaluation metrics
+        output_dir: Directory to save visualizations
+    """
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Plot ARI scores over time
+    plt.figure(figsize=(10, 6))
+    plt.plot(metrics_df['timestamp'], metrics_df['ari'], marker='o')
+    plt.title('ARI Score Over Time')
+    plt.xlabel('Timestamp')
+    plt.ylabel('ARI Score')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'ari_over_time.png'))
+    plt.close()
+    
+    # Plot coherence metrics
+    coherence_metrics = ['temporal_coherence_pred', 'semantic_coherence_pred']
+    plt.figure(figsize=(10, 6))
+    for metric in coherence_metrics:
+        plt.plot(metrics_df['timestamp'], metrics_df[metric], 
+                marker='o', label=metric.replace('_', ' ').title())
+    plt.title('Coherence Metrics Over Time')
+    plt.xlabel('Timestamp')
+    plt.ylabel('Coherence Score')
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'coherence_metrics.png'))
+    plt.close()
+    
+    # Generate correlation heatmap
+    plt.figure(figsize=(10, 8))
+    correlation = metrics_df[[
+        'ari', 'temporal_coherence_pred', 'semantic_coherence_pred',
+        'n_predicted_groups', 'avg_group_size_pred'
+    ]].corr()
+    sns.heatmap(correlation, annot=True, cmap='coolwarm', center=0)
+    plt.title('Correlation between Metrics')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'metric_correlations.png'))
+    plt.close()
+
+def generate_report(metrics_df: pd.DataFrame, output_file: str) -> None:
+    """
+    Generate a detailed analysis report.
+    
+    Args:
+        metrics_df: DataFrame containing evaluation metrics
+        output_file: Path to save the report
+    """
+    with open(output_file, 'w') as f:
+        f.write("Conversation Detection Analysis Report\n")
+        f.write("===================================\n\n")
+        
+        # Overall statistics
+        f.write("Overall Performance:\n")
+        f.write(f"Average ARI Score: {metrics_df['ari'].mean():.4f}\n")
+        f.write(f"Best ARI Score: {metrics_df['ari'].max():.4f}\n")
+        f.write(f"Worst ARI Score: {metrics_df['ari'].min():.4f}\n\n")
+        
+        # Group statistics
+        f.write("Group Statistics:\n")
+        f.write(f"Average Number of Groups: {metrics_df['n_predicted_groups'].mean():.2f}\n")
+        f.write(f"Average Group Size: {metrics_df['avg_group_size_pred'].mean():.2f}\n\n")
+        
+        # Best performing models
+        f.write("Top 3 Models:\n")
+        top_models = metrics_df.nlargest(3, 'ari')
+        for _, model in top_models.iterrows():
+            f.write(f"Model {model['model']}: ARI = {model['ari']:.4f}\n")
+
+def main():
+    """Main function to run metrics evaluation."""
+    parser = argparse.ArgumentParser(description="Evaluate conversation detection results")
+    parser.add_argument("group_dir", help="Directory containing ground truth and predictions")
+    parser.add_argument("--output-dir", default="results", help="Directory for output files")
+    args = parser.parse_args()
     
     try:
-        parser = argparse.ArgumentParser(
-            description='Calculate conversation clustering metrics (ARI) for different models.',
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            epilog="""
-Examples:
-    # Evaluate models in a specific directory
-    python conversation_metrics.py /path/to/group/directory
-    
-    # Show help message
-    python conversation_metrics.py --help
-            """
-        )
-        parser.add_argument(
-            'group_dir',
-            help='Path to directory containing label files and ground truth'
-        )
+        # Load ground truth
+        gt_file = os.path.join(args.group_dir, "GT_conversations_thisiscere.csv")
+        gt_df = pd.read_csv(gt_file)
+        logger.info(f"Loaded ground truth from {gt_file}")
         
-        args = parser.parse_args()
+        # Process all prediction files
+        pred_files = glob.glob(os.path.join(args.group_dir, "labels_*.csv"))
+        all_metrics = []
         
-        # Validate input directory
-        if not os.path.exists(args.group_dir):
-            logger.error(f"Directory does not exist: {args.group_dir}")
-            sys.exit(1)
+        for pred_file in pred_files:
+            model_id = os.path.basename(pred_file).split('_')[1]
+            logger.info(f"Processing predictions from model: {model_id}")
             
-        if not os.path.isdir(args.group_dir):
-            logger.error(f"Path is not a directory: {args.group_dir}")
-            sys.exit(1)
-            
-        # Execute evaluation
-        evaluate_conversation_clustering(args.group_dir)
+            try:
+                pred_df = pd.read_csv(pred_file)
+                pred_df.name = os.path.basename(pred_file)  # Store filename for timestamp extraction
+                
+                # Check for duplicates
+                if pred_df['message_id'].duplicated().any():
+                    logger.warning(f"Duplicate message IDs found in prediction file: {pred_file}")
+                    pred_df = pred_df.drop_duplicates('message_id')
+                
+                # Calculate metrics
+                metrics = evaluate_groupings(gt_df, pred_df)
+                metrics['model'] = model_id
+                metrics['label_file'] = os.path.basename(pred_file)
+                all_metrics.append(metrics)
+                
+            except Exception as e:
+                logger.error(f"Error processing {pred_file}: {str(e)}")
+                continue
         
-    except KeyboardInterrupt:
-        logger.info("Evaluation interrupted by user")
-        sys.exit(1)
+        if not all_metrics:
+            logger.error("No metrics were calculated successfully")
+            return 1
+        
+        # Combine all metrics
+        metrics_df = pd.DataFrame(all_metrics)
+        
+        # Create output directory
+        os.makedirs(args.output_dir, exist_ok=True)
+        
+        # Save metrics
+        metrics_file = os.path.join(
+            args.group_dir,
+            f"metrics_conversations_thisiscere_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        )
+        metrics_df.to_csv(metrics_file, index=False)
+        logger.info(f"Saved metrics to {metrics_file}")
+        
+        # Generate report
+        report_file = os.path.join(args.output_dir, 'analysis_report.txt')
+        generate_report(metrics_df, report_file)
+        logger.info(f"Generated analysis report at {report_file}")
+        
+        return 0
+        
     except Exception as e:
-        logger.error(f"Unexpected error during evaluation: {e}", exc_info=True)
-        sys.exit(1)
+        logger.error(f"Error in main execution: {str(e)}")
+        return 1
 
 if __name__ == "__main__":
-    main() 
+    exit(main()) 
