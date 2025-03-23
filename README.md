@@ -167,7 +167,7 @@ safety check
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
-- Email: contact@zyra-audition.com
+- Email: zyra.v23@protonmail.com 
 - GitHub: [@zyra-audition](https://github.com/zyra-audition)
 
 ## Acknowledgments
