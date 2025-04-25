@@ -36,6 +36,15 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 BATCH_SIZE = 50  # Process messages in batches of 50 to stay within token limits
 MODEL_NAME = "claude-3-5-sonnet-latest"  # Claude 3.5 Sonnet model (latest version)
 
+# Define base classes that were previously imported
+class Message:
+    def __init__(self, id: str, text: str, timestamp: str, user: Dict[str, str]):
+        self.id = id
+        self.text = text
+        self.timestamp = timestamp
+        self.user = user
+        self.metadata = {}  
+
 class Claude35ConversationDetector(ConversationDetector):
     """
     Conversation detector using Claude 3.5 Sonnet for message analysis and topic detection.
@@ -67,7 +76,8 @@ class Claude35ConversationDetector(ConversationDetector):
                 'id': msg.id,
                 'text': msg.text,
                 'timestamp': msg.timestamp,
-                'user': msg.user
+                'user': msg.user,
+                'metadata': getattr(msg, 'metadata', {})  # Include metadata if available
             }
             for msg in messages
         ]
@@ -138,13 +148,33 @@ class Claude35ConversationDetector(ConversationDetector):
     def _create_analysis_prompt(self, messages: List[Dict[str, Any]]) -> str:
         """Create the analysis prompt for Claude."""
         formatted_messages = "\n"
+        
+        # First, identify messages with existing conversation context
+        context_info = ""
+        for msg in messages:
+            if 'metadata' in msg and msg['metadata'].get('conversation_id') and msg['metadata'].get('topic'):
+                context_info += f"- Message ID: {msg['id']} belongs to conversation {msg['metadata']['conversation_id']} with topic \"{msg['metadata']['topic']}\"\n"
+        
+        # Add context section if we have any
+        if context_info:
+            formatted_messages += "### CONTEXT (EXISTING CONVERSATION ASSIGNMENTS)\n"
+            formatted_messages += context_info
+            formatted_messages += "\n### MESSAGES TO ANALYZE\n"
+        
+        # Format all messages 
         for msg in messages:
             formatted_messages += f"Message ID: {msg['id']}\n"
             formatted_messages += f"Timestamp: {msg['timestamp']}\n"
             formatted_messages += f"User: {msg['user']['username']}\n"
             formatted_messages += f"Content: {msg['text']}\n\n"
 
-        return CONVERSATION_DETECTION_PROMPT.replace("[MESSAGES]", formatted_messages)
+        # Modify the prompt to include instructions about respecting existing conversation IDs
+        modified_prompt = CONVERSATION_DETECTION_PROMPT.replace("[MESSAGES]", formatted_messages)
+        
+        if context_info:
+            modified_prompt += "\nIMPORTANT: When analyzing messages, respect the existing conversation assignments provided in the context section. Assign new messages to existing conversations when they belong to the same thread."
+            
+        return modified_prompt
 
 if __name__ == '__main__':
     # Configure logging

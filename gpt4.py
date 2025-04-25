@@ -27,6 +27,7 @@ class Message:
         self.text = text
         self.timestamp = timestamp
         self.user = user
+        self.metadata = {}  
 
 class Label:
     def __init__(self, message_id: str, conversation_id: str, topic: str, timestamp: str, metadata: Dict[str, Any]):
@@ -83,7 +84,7 @@ with open(PROMPT_FILE, 'r') as f:
 
 # Constants
 BATCH_SIZE = 50  # Process messages in batches of 50 to stay within token limits
-MODEL_NAME = "gpt-4-0125-preview"  # GPT-4 Turbo model
+MODEL_NAME = "gpt-4o"  # GPT-4o model
 
 class GPT4ConversationDetector(ConversationDetector):
     """
@@ -116,7 +117,8 @@ class GPT4ConversationDetector(ConversationDetector):
                 'id': msg.id,
                 'text': msg.text,
                 'timestamp': msg.timestamp,
-                'user': msg.user
+                'user': msg.user,
+                'metadata': getattr(msg, 'metadata', {})  # Include metadata if available
             }
             for msg in messages
         ]
@@ -210,13 +212,33 @@ class GPT4ConversationDetector(ConversationDetector):
     def _create_analysis_prompt(self, messages: List[Dict[str, Any]]) -> str:
         """Create the analysis prompt for GPT-4."""
         formatted_messages = "\n"
+        
+        # First, identify messages with existing conversation context
+        context_info = ""
+        for msg in messages:
+            if 'metadata' in msg and msg['metadata'].get('conversation_id') and msg['metadata'].get('topic'):
+                context_info += f"- Message ID: {msg['id']} belongs to conversation {msg['metadata']['conversation_id']} with topic \"{msg['metadata']['topic']}\"\n"
+        
+        # Add context section if we have any
+        if context_info:
+            formatted_messages += "### CONTEXT (EXISTING CONVERSATION ASSIGNMENTS)\n"
+            formatted_messages += context_info
+            formatted_messages += "\n### MESSAGES TO ANALYZE\n"
+        
+        # Format all messages 
         for msg in messages:
             formatted_messages += f"Message ID: {msg['id']}\n"
             formatted_messages += f"Timestamp: {msg['timestamp']}\n"
             formatted_messages += f"User: {msg['user']['username']}\n"
             formatted_messages += f"Content: {msg['text']}\n\n"
 
-        return CONVERSATION_DETECTION_PROMPT.replace("[MESSAGES]", formatted_messages)
+        # Modify the prompt to include instructions about respecting existing conversation IDs
+        modified_prompt = CONVERSATION_DETECTION_PROMPT.replace("[MESSAGES]", formatted_messages)
+        
+        if context_info:
+            modified_prompt += "\nIMPORTANT: When analyzing messages, respect the existing conversation assignments provided in the context section. Assign new messages to existing conversations when they belong to the same thread."
+            
+        return modified_prompt
 
 if __name__ == '__main__':
     # Configure logging

@@ -204,23 +204,33 @@ class Label(BaseModel):
         }
 
 class AnalysisResponse(BaseModel):
-    labels: List[Label] = Field(..., description="Analysis results")
+    result: Dict[str, Any] = Field(..., description="Analysis results with separate new_message and history labels")
     model: str = Field(..., example="gpt4", description="Model used for analysis")
     processing_time: float = Field(..., example=1.23, description="Processing time in seconds")
     
     class Config:
         schema_extra = {
             "example": {
-                "labels": [
-                    {
+                "result": {
+                    "new_message": {
                         "message_id": "MessageId(longValue=15)",
                         "conversation_id": "conv123",
                         "topic": "Stage Testing",
                         "timestamp": "1745577800",
                         "labeler_id": "gpt4",
                         "confidence": 0.95
-                    }
-                ],
+                    },
+                    "history": [
+                        {
+                            "message_id": "MessageId(longValue=10)",
+                            "conversation_id": "conv123",
+                            "topic": "Stage Testing",
+                            "timestamp": "1745577700",
+                            "labeler_id": "gpt4",
+                            "confidence": 0.92
+                        }
+                    ]
+                },
                 "model": "gpt4",
                 "processing_time": 1.23
             }
@@ -272,6 +282,9 @@ async def analyze_conversations(request: AnalysisRequest):
     # Convert all messages to internal model format
     all_messages = []
     
+    # Keep track of message IDs that need processing (empty labels)
+    messages_to_process = set()
+    
     # Process history messages first to maintain conversation context
     for msg in request.history:
         user = {
@@ -285,11 +298,18 @@ async def analyze_conversations(request: AnalysisRequest):
             msg.message_timestamp, 
             user
         )
-        # Add conversation info to metadata for context
-        history_msg.metadata = {
-            "conversation_id": msg.conversation_id,
-            "topic": msg.topic if msg.topic else ""
-        }
+        
+        # Check if this message needs to be processed (empty conversation_id or topic)
+        if not msg.conversation_id or not msg.topic:
+            messages_to_process.add(msg.message_id)
+            # Don't add metadata for messages that need to be processed
+        else:
+            # Add conversation info to metadata for context
+            history_msg.metadata = {
+                "conversation_id": msg.conversation_id,
+                "topic": msg.topic
+            }
+            
         all_messages.append(history_msg)
     
     # Add the new message to be analyzed
@@ -306,16 +326,18 @@ async def analyze_conversations(request: AnalysisRequest):
     )
     all_messages.append(new_msg)
     
+    # New message always needs processing
+    messages_to_process.add(request.new_message.message_id)
+    
     # Perform detection
     try:
         all_labels = detector.detect(all_messages)
         
-        # Only return label for the new message
-        new_msg_id = request.new_message.message_id
+        # Filter labels to include only those for the new message and unlabeled history
         label_dtos = []
         
         for label in all_labels:
-            if label.message_id == new_msg_id:
+            if label.message_id in messages_to_process:
                 label_dtos.append(Label(
                     message_id=label.message_id,
                     conversation_id=label.conversation_id,
@@ -324,13 +346,28 @@ async def analyze_conversations(request: AnalysisRequest):
                     labeler_id=label.metadata.get('labeler_id', request.model),
                     confidence=label.metadata.get('confidence', 1.0)
                 ))
-                break
         
         end_time = datetime.now()
         processing_time = (end_time - start_time).total_seconds()
         
+        # Organize labels into new_message and history sections
+        new_message_label = None
+        history_labels = []
+        
+        for label in label_dtos:
+            if label.message_id == request.new_message.message_id:
+                new_message_label = label
+            else:
+                history_labels.append(label)
+        
+        if not new_message_label:
+            raise HTTPException(status_code=500, detail="Failed to generate label for new message")
+        
         return AnalysisResponse(
-            labels=label_dtos,
+            result={
+                "new_message": new_message_label,
+                "history": history_labels
+            },
             model=request.model,
             processing_time=processing_time
         )
