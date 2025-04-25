@@ -1,0 +1,39 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Copy application files
+COPY requirements.txt .
+COPY gpt4.py .
+COPY api_layer.py .
+COPY __init__.py .
+COPY open_source_examples/prompts/conversation_detection_prompt.txt ./open_source_examples/prompts/
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir fastapi uvicorn
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV MODEL_NAME=gpt4
+
+# Create a non-root user and switch to it
+RUN useradd -m appuser
+USER appuser
+
+# Add app directory to Python path
+ENV PYTHONPATH=/app:$PYTHONPATH
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+
+# Expose the port
+EXPOSE ${PORT:-8000}
+
+# Set default command
+CMD ["python", "api_layer.py"] 
