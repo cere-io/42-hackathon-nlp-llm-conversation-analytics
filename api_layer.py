@@ -99,17 +99,56 @@ class Message(BaseModel):
             }
         }
 
+class HistoryMessage(Message):
+    conversation_id: str = Field(..., example="conv123", description="Conversation ID from previous analysis")
+    topic: Optional[str] = Field(None, example="Stage Testing", description="Topic from previous analysis")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "message_id": "MessageId(longValue=9)",
+                "group_id": "-4673616689",
+                "group_title": "NLP Bot Test",
+                "message_text": "Is this working on stage?",
+                "message_timestamp": "1745577699",
+                "author": {
+                    "id": "530192978",
+                    "username": "ninja_by",
+                    "first_name": "Sergey",
+                    "last_name": "",
+                    "is_bot": False
+                },
+                "conversation_id": "conv123",
+                "topic": "Stage Testing"
+            }
+        }
+
 class AnalysisRequest(BaseModel):
-    messages: List[Message] = Field(..., description="List of messages to analyze")
+    new_message: Message = Field(..., description="New message to analyze")
+    history: Optional[List[HistoryMessage]] = Field([], description="Previous messages with their conversation IDs")
     model: str = Field("gpt4", example="gpt4", description="Model to use for analysis (gpt4 or claude35)")
     
     class Config:
         schema_extra = {
             "example": {
-                "messages": [
+                "new_message": {
+                    "message_id": "MessageId(longValue=15)",
+                    "group_id": "-4673616689",
+                    "group_title": "NLP Bot Test",
+                    "message_text": "When can we deploy this to production?",
+                    "message_timestamp": "1745577800",
+                    "author": {
+                        "id": "530192978",
+                        "username": "ninja_by",
+                        "first_name": "Sergey",
+                        "last_name": "",
+                        "is_bot": False
+                    }
+                },
+                "history": [
                     {
                         "message_id": "MessageId(longValue=9)",
-                        "group_id": "-4673616689", 
+                        "group_id": "-4673616689",
                         "group_title": "NLP Bot Test",
                         "message_text": "Is this working on stage?",
                         "message_timestamp": "1745577699",
@@ -119,7 +158,9 @@ class AnalysisRequest(BaseModel):
                             "first_name": "Sergey",
                             "last_name": "",
                             "is_bot": False
-                        }
+                        },
+                        "conversation_id": "conv123",
+                        "topic": "Stage Testing"
                     },
                     {
                         "message_id": "MessageId(longValue=10)",
@@ -133,7 +174,9 @@ class AnalysisRequest(BaseModel):
                             "first_name": "Jane",
                             "last_name": "Smith",
                             "is_bot": False
-                        }
+                        },
+                        "conversation_id": "conv123",
+                        "topic": "Stage Testing"
                     }
                 ],
                 "model": "gpt4"
@@ -141,20 +184,20 @@ class AnalysisRequest(BaseModel):
         }
 
 class Label(BaseModel):
-    message_id: str = Field(..., example="MessageId(longValue=9)", description="Message ID")
+    message_id: str = Field(..., example="MessageId(longValue=15)", description="Message ID")
     conversation_id: str = Field(..., example="conv123", description="Conversation ID")
     topic: str = Field(..., example="Stage Testing", description="Conversation topic")
-    timestamp: str = Field(..., example="1745577699", description="Timestamp")
+    timestamp: str = Field(..., example="1745577800", description="Timestamp")
     labeler_id: str = Field(..., example="gpt4", description="ID of the labeler model")
     confidence: float = Field(..., example=0.95, description="Confidence score")
     
     class Config:
         schema_extra = {
             "example": {
-                "message_id": "MessageId(longValue=9)",
+                "message_id": "MessageId(longValue=15)",
                 "conversation_id": "conv123",
                 "topic": "Stage Testing",
-                "timestamp": "1745577699",
+                "timestamp": "1745577800",
                 "labeler_id": "gpt4",
                 "confidence": 0.95
             }
@@ -170,18 +213,10 @@ class AnalysisResponse(BaseModel):
             "example": {
                 "labels": [
                     {
-                        "message_id": "MessageId(longValue=9)",
+                        "message_id": "MessageId(longValue=15)",
                         "conversation_id": "conv123",
                         "topic": "Stage Testing",
-                        "timestamp": "1745577699",
-                        "labeler_id": "gpt4",
-                        "confidence": 0.95
-                    },
-                    {
-                        "message_id": "MessageId(longValue=10)",
-                        "conversation_id": "conv123",
-                        "topic": "Stage Testing",
-                        "timestamp": "1745577750",
+                        "timestamp": "1745577800",
                         "labeler_id": "gpt4",
                         "confidence": 0.95
                     }
@@ -234,38 +269,62 @@ async def analyze_conversations(request: AnalysisRequest):
     else:
         raise HTTPException(status_code=400, detail=f"Model {request.model} not supported")
     
-    # Convert DTO to internal model
-    messages = []
-    for msg in request.messages:
-        # Create user dict compatible with the detector's expected format
+    # Convert all messages to internal model format
+    all_messages = []
+    
+    # Process history messages first to maintain conversation context
+    for msg in request.history:
         user = {
             "username": msg.author.username,
             "first_name": msg.author.first_name,
             "last_name": msg.author.last_name
         }
-        # Create message using the model-specific message class
-        messages.append(message_class(
+        history_msg = message_class(
             msg.message_id, 
             msg.message_text, 
             msg.message_timestamp, 
             user
-        ))
+        )
+        # Add conversation info to metadata for context
+        history_msg.metadata = {
+            "conversation_id": msg.conversation_id,
+            "topic": msg.topic if msg.topic else ""
+        }
+        all_messages.append(history_msg)
+    
+    # Add the new message to be analyzed
+    user = {
+        "username": request.new_message.author.username,
+        "first_name": request.new_message.author.first_name,
+        "last_name": request.new_message.author.last_name
+    }
+    new_msg = message_class(
+        request.new_message.message_id,
+        request.new_message.message_text,
+        request.new_message.message_timestamp,
+        user
+    )
+    all_messages.append(new_msg)
     
     # Perform detection
     try:
-        labels = detector.detect(messages)
+        all_labels = detector.detect(all_messages)
         
-        # Convert back to DTO
+        # Only return label for the new message
+        new_msg_id = request.new_message.message_id
         label_dtos = []
-        for label in labels:
-            label_dtos.append(Label(
-                message_id=label.message_id,
-                conversation_id=label.conversation_id,
-                topic=label.topic,
-                timestamp=label.timestamp,
-                labeler_id=label.metadata.get('labeler_id', request.model),
-                confidence=label.metadata.get('confidence', 1.0)
-            ))
+        
+        for label in all_labels:
+            if label.message_id == new_msg_id:
+                label_dtos.append(Label(
+                    message_id=label.message_id,
+                    conversation_id=label.conversation_id,
+                    topic=label.topic,
+                    timestamp=label.timestamp,
+                    labeler_id=label.metadata.get('labeler_id', request.model),
+                    confidence=label.metadata.get('confidence', 1.0)
+                ))
+                break
         
         end_time = datetime.now()
         processing_time = (end_time - start_time).total_seconds()
