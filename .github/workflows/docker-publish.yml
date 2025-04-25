@@ -46,7 +46,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile.claude
+          file: ./docker/Dockerfile.claude
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.meta.outputs.repo_prefix }}-claude:${{ steps.meta.outputs.version }}
           labels: |
@@ -58,7 +58,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile.gpt4
+          file: ./docker/Dockerfile.gpt4
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.meta.outputs.repo_prefix }}-gpt4:${{ steps.meta.outputs.version }}
           labels: |
